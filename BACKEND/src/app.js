@@ -21,11 +21,13 @@ const staticAllowedOrigins = [
 // Allow Vercel preview deployments for this project
 const vercelPreviewRegex = /^https:\/\/dev-connect-website(-[a-z0-9-]+)?\.vercel\.app$/;
 
+const isOriginAllowed = (origin) =>
+  staticAllowedOrigins.includes(origin) || vercelPreviewRegex.test(origin);
+
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true); // non-browser or same-origin
-    const isAllowed =
-      staticAllowedOrigins.includes(origin) || vercelPreviewRegex.test(origin);
+    const isAllowed = isOriginAllowed(origin);
     return callback(isAllowed ? null : new Error("Not allowed by CORS"), isAllowed);
   },
   credentials: true,
@@ -60,7 +62,11 @@ app.use("/", paymentsPhonePeRouter);
 // Socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const ok = isOriginAllowed(origin);
+      return callback(ok ? null : new Error("Not allowed by CORS"), ok);
+    },
     credentials: true,
   }
 });
