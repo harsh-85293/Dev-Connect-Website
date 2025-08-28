@@ -23,6 +23,11 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser())
 
+// Health check for hosting providers
+app.get("/healthz", (req, res) => {
+  res.status(200).send("ok");
+});
+
 const authRouter = require("./routes/auth")
 const userRouter = require("./routes/user")
 const profileRouter = require("./routes/profile")
