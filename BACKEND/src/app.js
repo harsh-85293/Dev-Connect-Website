@@ -2,6 +2,8 @@ require('dotenv').config(); // Load environment variables
 const express = require("express");
 const http = require("http");
 const app = express();
+// behind Render/Proxy for secure cookies
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const Message = require("./models/message");
@@ -10,16 +12,29 @@ const User = require("./models/user");
 const cookieParser = require("cookie-parser")
 const cors = require("cors")
 
-const allowedOrigins = [
+const staticAllowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
-app.use(cors({
-  origin: allowedOrigins,
+// Allow Vercel preview deployments for this project
+const vercelPreviewRegex = /^https:\/\/dev-connect-website(-[a-z0-9-]+)?\.vercel\.app$/;
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // non-browser or same-origin
+    const isAllowed =
+      staticAllowedOrigins.includes(origin) || vercelPreviewRegex.test(origin);
+    return callback(isAllowed ? null : new Error("Not allowed by CORS"), isAllowed);
+  },
   credentials: true,
-}))
+  methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions))
 app.use(express.json());
 app.use(cookieParser())
 
