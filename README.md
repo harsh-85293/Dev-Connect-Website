@@ -116,3 +116,62 @@ const freshData = await profileAPI.refreshProfile();
 - [ ] Advanced search and filtering
 - [ ] Real-time notifications
 - [ ] Profile sharing and embedding
+
+---
+
+## ☁️ Deployment Guide (Render backend + Vercel frontend)
+
+### 1) Prepare environment variables
+
+Backend (Node/Express):
+
+- `MONGODB_URI` = your Mongo connection string
+- `JWT_SECRET` = a strong secret
+- `EMAIL_USER`, `EMAIL_PASS` (optional: email features)
+- `FRONTEND_URL` = your Vercel domain, e.g. `https://dev-connect-website.vercel.app`
+- `BACKEND_URL` = your backend public URL (optional, used in templates)
+- `PHONEPE_BASE_URL`, `PHONEPE_MERCHANT_ID`, `PHONEPE_SALT_KEY`, `PHONEPE_SALT_INDEX` (optional: PhonePe)
+
+Frontend (Vite):
+
+- `VITE_API_BASE_URL` = your backend public URL (e.g. `https://YOUR-BACKEND.onrender.com`)
+
+### 2) Deploy backend (Render)
+
+1. Push this repo to GitHub (done)
+2. Create a new Web Service on Render → select this repo
+3. Root Directory: `BACKEND`
+4. Runtime: Node 18+
+5. Build Command: leave empty (Render will install deps)
+6. Start Command: `npm start`
+7. Add Environment Variables from the list above
+8. Deploy → copy the service URL (e.g. `https://devconnect-backend.onrender.com`)
+
+Note: Render provides a `PORT` env; the app already respects `process.env.PORT`.
+
+### 3) Deploy frontend (Vercel)
+
+1. Go to `https://vercel.com/new` → import `harsh-85293/Dev-Connect-Website`
+2. Root Directory: `Frontend`
+3. Framework Preset: Vite
+4. Build Command: `npm run build`
+5. Output Directory: `dist`
+6. Environment Variables → add `VITE_API_BASE_URL` with your backend URL
+7. Deploy → note the Vercel domain and set it back on your backend as `FRONTEND_URL`
+
+### 4) Post-deploy checks
+
+- Verify API calls from Vercel site succeed (CORS is configured via `FRONTEND_URL`)
+- Socket.IO client should connect to the backend URL. If needed, use:
+
+```js
+// client example
+import { io } from 'socket.io-client';
+const socket = io(import.meta.env.VITE_API_BASE_URL, { withCredentials: true, transports: ['websocket'] });
+```
+
+### 5) Local development
+
+- Backend: `cd BACKEND && npm run dev`
+- Frontend: `cd Frontend && npm run dev`
+- Open `http://localhost:5173`
