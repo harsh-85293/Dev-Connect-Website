@@ -5,6 +5,12 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken");
 const { sendWelcomeEmail, sendLoginSuggestionEmail } = require("../services/emailService");
+const isProd = process.env.NODE_ENV === 'production';
+const cookieBaseOptions = {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+};
 
 authRouter.post("/signup", async (req, res) => {
     try {
@@ -31,7 +37,8 @@ authRouter.post("/signup", async (req, res) => {
          
         //Add a token to cookie and send the response back to the user
         res.cookie("token", token, {
-            expiresIn : new Date(Date.now() + 8 * 3600000)
+            ...cookieBaseOptions,
+            expires: new Date(Date.now() + 8 * 3600000)
         })
         
         // Send welcome email if user has email preferences enabled
@@ -70,7 +77,8 @@ authRouter.post("/login", async(req, res) => {
             
             //Add a token to cookie and send the response back to the user
             res.cookie("token", token, {
-                expiresIn : new Date(Date.now() + 8 * 3600000)
+                ...cookieBaseOptions,
+                expires: new Date(Date.now() + 8 * 3600000)
             })
             
             // Send login suggestion email with potential connections
@@ -107,8 +115,9 @@ authRouter.post("/login", async(req, res) => {
 })
 
 authRouter.post("/logout", async(req, res) => {
-    res.cookie("token", null, {
-        expires : new Date(Date.now()), 
+    res.clearCookie("token", {
+        ...cookieBaseOptions,
+        expires: new Date(0),
     })
     res.send("Logout successfull");
 })
