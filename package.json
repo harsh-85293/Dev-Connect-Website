@@ -1,0 +1,19 @@
+{
+  "name": "devconnect",
+  "version": "1.0.0",
+  "description": "Full-stack developer connection platform",
+  "scripts": {
+    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "backend:dev": "cd BACKEND && npm run dev",
+    "frontend:dev": "cd Frontend && npm run dev",
+    "backend:start": "cd BACKEND && npm start",
+    "frontend:start": "cd Frontend && npm run build && npm run preview",
+    "install:all": "npm install && cd BACKEND && npm install && cd ../Frontend && npm install"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

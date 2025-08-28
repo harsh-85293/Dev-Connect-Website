@@ -1,0 +1,8 @@
+node_modules/
+Frontend/dist/
+dist/
+.env
+.env.*
+npm-debug.log*
+yarn-error.log*
+.vercel
