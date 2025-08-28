@@ -175,3 +175,40 @@ const socket = io(import.meta.env.VITE_API_BASE_URL, { withCredentials: true, tr
 - Backend: `cd BACKEND && npm run dev`
 - Frontend: `cd Frontend && npm run dev`
 - Open `http://localhost:5173`
+
+---
+
+## 🔑 Environment quick reference (no secrets)
+
+Backend (`BACKEND/.env` on your host):
+
+- `PORT` = 3000 (Render provides one; app uses `process.env.PORT`)
+- `MONGODB_URI` = <your Mongo URI>
+- `JWT_SECRET` = <your secret>
+- `EMAIL_USER` = <optional>
+- `EMAIL_PASS` = <optional>
+- `FRONTEND_URL` = `https://YOUR-APP.vercel.app`
+- `BACKEND_URL` = `https://YOUR-BACKEND.onrender.com` (optional, email templates)
+- `PHONEPE_BASE_URL` = `https://api-preprod.phonepe.com/apis/pg-sandbox`
+- `PHONEPE_MERCHANT_ID` = <optional>
+- `PHONEPE_SALT_KEY` = <optional>
+- `PHONEPE_SALT_INDEX` = `1`
+
+Frontend (`Frontend/.env` in Vercel):
+
+- `VITE_API_BASE_URL` = `https://YOUR-BACKEND.onrender.com`
+
+---
+
+## 🖼️ Render setup (screenshots placeholders)
+
+1. Create Web Service → select repo → Root Dir: `BACKEND`
+   - [screenshot: render-new-service.png]
+2. Runtime: Node 18+; Start: `npm start`; Build: empty
+   - [screenshot: render-runtime-start.png]
+3. Add Environment variables
+   - [screenshot: render-env-vars.png]
+4. Deploy → copy backend URL
+   - [screenshot: render-deployed-url.png]
+5. After frontend deploy, set `FRONTEND_URL` and redeploy
+   - [screenshot: render-redeploy.png]
