@@ -3,6 +3,10 @@ Frontend/dist/
 dist/
 .env
 .env.*
+# Allow example env files
+!.env.example
+!Frontend/.env.example
+!BACKEND/.env.example
 npm-debug.log*
 yarn-error.log*
 .vercel
