@@ -32,11 +32,12 @@ const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   optionsSuccessStatus: 204,
 };
 
 app.use(cors(corsOptions))
+app.options("*", cors(corsOptions))
 app.use(express.json());
 app.use(cookieParser())
 
