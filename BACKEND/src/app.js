@@ -24,25 +24,24 @@ const vercelPreviewRegex = /^https:\/\/dev-connect-website(-[a-z0-9-]+)?\.vercel
 const isOriginAllowed = (origin) =>
   staticAllowedOrigins.includes(origin) || vercelPreviewRegex.test(origin);
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // non-browser or same-origin
-    const isAllowed = isOriginAllowed(origin);
-    return callback(isAllowed ? null : new Error("Not allowed by CORS"), isAllowed);
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
-  optionsSuccessStatus: 204,
-};
-
-app.use(cors(corsOptions))
-// Handle preflight by short-circuiting after CORS headers are set
+// Manual CORS to avoid any '*' headers from defaults
 app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
+  const requestOrigin = req.headers.origin;
+  if (requestOrigin && isOriginAllowed(requestOrigin)) {
+    res.header("Access-Control-Allow-Origin", requestOrigin);
+    res.header("Vary", "Origin");
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PATCH,PUT,DELETE,OPTIONS"
+    );
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, X-Requested-With, Accept"
+    );
+    if (req.method === "OPTIONS") return res.sendStatus(204);
   }
-  next();
+  return next();
 });
 app.use(express.json());
 app.use(cookieParser())
