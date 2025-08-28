@@ -37,6 +37,13 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions))
+// Handle preflight by short-circuiting after CORS headers are set
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+  next();
+});
 app.use(express.json());
 app.use(cookieParser())
 
