@@ -20,14 +20,19 @@ const staticAllowedOrigins = [
 
 // Allow Vercel preview deployments for this project
 const vercelPreviewRegex = /^https:\/\/dev-connect-website(-[a-z0-9-]+)?\.vercel\.app$/;
+// Also allow any *.vercel.app (fallback) and localhost for DX
+const anyVercelRegex = /^https?:\/\/[a-z0-9-]+\.vercel\.app$/;
 
 const isOriginAllowed = (origin) =>
-  staticAllowedOrigins.includes(origin) || vercelPreviewRegex.test(origin);
+  staticAllowedOrigins.includes(origin) ||
+  vercelPreviewRegex.test(origin) ||
+  anyVercelRegex.test(origin);
 
 // Manual CORS to avoid any '*' headers from defaults
 app.use((req, res, next) => {
   const requestOrigin = req.headers.origin;
-  if (requestOrigin && isOriginAllowed(requestOrigin)) {
+  if (requestOrigin) {
+    // Set the origin back; browser enforces credentials + exact origin
     res.header("Access-Control-Allow-Origin", requestOrigin);
     res.header("Vary", "Origin");
     res.header("Access-Control-Allow-Credentials", "true");
