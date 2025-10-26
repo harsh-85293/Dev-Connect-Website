@@ -1,0 +1,33 @@
+sequenceDiagram
+    participant U1 as User A
+    participant U2 as User B
+    participant F1 as Frontend A
+    participant F2 as Frontend B
+    participant S as Socket.IO Server
+    participant DB as MongoDB
+
+    U1->>F1: Open chat with User B
+    F1->>S: Socket connect + register(userId)
+    S->>S: Map userId to socketId
+    S->>F1: Connection established
+    
+    U2->>F2: Open chat with User A
+    F2->>S: Socket connect + register(userId)
+    S->>S: Map userId to socketId
+    S->>F2: Connection established
+    
+    U1->>F1: Type message
+    F1->>S: emit "private-message" (toUserId, message)
+    S->>S: Validate sender/recipient
+    S->>DB: Save message to Messages collection
+    DB-->>S: Message saved
+    
+    S->>F1: emit "private-message" (ack to sender)
+    S->>F2: emit "private-message" (to recipient)
+    F1->>U1: Show message sent
+    F2->>U2: Show incoming message
+    
+    Note over S: Presence tracking
+    S->>F1: emit "presence" (User B online)
+    S->>F2: emit "presence" (User A online)
+

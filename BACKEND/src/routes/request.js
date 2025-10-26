@@ -4,6 +4,8 @@ const {userAuth} = require("../middlewares/auth")
 const ConnectionRequest = require("../models/connectionRequest")
 const User = require("../models/user")
 const { sendConnectionRequestEmail } = require("../services/emailService")
+const redisClient = require("../config/redis");
+const kafkaClient = require("../config/kafka");
 
 requestRouter.post("/request/send/:status/:toUserId", userAuth, async (req, res) => {
     try {
@@ -46,24 +48,18 @@ requestRouter.post("/request/send/:status/:toUserId", userAuth, async (req, res)
                 silver: 100,
                 gold: Infinity,
             }
-            const todayStart = new Date();
-            todayStart.setHours(0,0,0,0);
-            const todayEnd = new Date();
-            todayEnd.setHours(23,59,59,999);
-
-            const sentToday = await ConnectionRequest.countDocuments({
-                fromUserId: fromUserId,
-                status: "interested",
-                createdAt: { $gte: todayStart, $lte: todayEnd },
-            });
-
+            
+            // Check rate limit using Redis
+            const rateLimitKey = `rate_limit:connection_requests:${fromUserId}:${new Date().toDateString()}`;
+            const currentCount = await redisClient.incrementRateLimit(rateLimitKey, 86400); // 24 hours
+            
             const allowed = tierLimits[tier] ?? 10;
-            if (sentToday >= allowed) {
+            if (currentCount > allowed) {
                 return res.status(429).json({
                     message: tier === 'gold' ? "Unlimited requests enabled" : `Daily request limit reached for ${tier.toUpperCase()} tier (${allowed}/day)`,
                     tier,
                     limit: allowed,
-                    used: sentToday,
+                    used: currentCount,
                 });
             }
         }
@@ -75,6 +71,15 @@ requestRouter.post("/request/send/:status/:toUserId", userAuth, async (req, res)
         })
 
         const data = await connectionrequest.save();//it will save it into the database 
+        
+        // Publish connection request event to Kafka
+        await kafkaClient.publishConnectionEvent('CONNECTION_REQUEST', {
+            requestId: data._id,
+            fromUserId,
+            toUserId,
+            status,
+            timestamp: new Date().toISOString()
+        });
         
         // Send email notification for connection request (only for "interested" status)
         if (status === "interested" && toUser.emailPreferences && toUser.emailPreferences.connectionRequests) {
@@ -123,6 +128,16 @@ requestRouter.post("/request/review/:status/:requestId", userAuth, async (req, r
 
         // ✅ minimal fix: save and return the updated doc (remove undefined `data`)
         const data = await connectionRequest.save();
+        
+        // Publish connection review event to Kafka
+        await kafkaClient.publishConnectionEvent('CONNECTION_REVIEW', {
+            requestId: data._id,
+            fromUserId: connectionRequest.fromUserId,
+            toUserId: loggedinUser._id,
+            status,
+            timestamp: new Date().toISOString()
+        });
+        
         res.json({ message: "Connection Request " + status, data })
 
         //Validate the status

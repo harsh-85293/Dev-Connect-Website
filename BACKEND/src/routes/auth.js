@@ -5,6 +5,8 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken");
 const { sendWelcomeEmail, sendLoginSuggestionEmail } = require("../services/emailService");
+const redisClient = require("../config/redis");
+const kafkaClient = require("../config/kafka");
 const isProd = process.env.NODE_ENV === 'production';
 const cookieBaseOptions = {
     httpOnly: true,
@@ -35,11 +37,39 @@ authRouter.post("/signup", async (req, res) => {
         const token =  await saveduser.getJWT();
         console.log(token);
          
+        // Cache user data in Redis
+        await redisClient.setUserData(saveduser._id.toString(), {
+            _id: saveduser._id,
+            firstName: saveduser.firstName,
+            lastName: saveduser.lastName,
+            emailId: saveduser.emailId,
+            photoUrl: saveduser.photoUrl,
+            about: saveduser.about,
+            skills: saveduser.skills,
+            isPremium: saveduser.isPremium,
+            membershipTier: saveduser.membershipTier
+        });
+
+        // Store session in Redis
+        await redisClient.setSession(token, {
+            userId: saveduser._id.toString(),
+            emailId: saveduser.emailId,
+            firstName: saveduser.firstName
+        });
+         
         //Add a token to cookie and send the response back to the user
         res.cookie("token", token, {
             ...cookieBaseOptions,
             expires: new Date(Date.now() + 8 * 3600000)
         })
+        
+        // Publish user signup event to Kafka
+        await kafkaClient.publishUserEvent('USER_SIGNUP', saveduser._id.toString(), {
+            firstName: saveduser.firstName,
+            lastName: saveduser.lastName,
+            emailId: saveduser.emailId,
+            signupTime: new Date().toISOString()
+        });
         
         // Send welcome email if user has email preferences enabled
         if (saveduser.emailPreferences.welcomeEmail) {
@@ -63,7 +93,32 @@ authRouter.post("/login", async(req, res) => {
     try {
         const {emailId, password} = req.body;
         
-        const user = await User.findOne({emailId : emailId})
+        // Check Redis cache first
+        let user = null;
+        const cachedUser = await redisClient.get(`user:email:${emailId}`);
+        
+        if (cachedUser) {
+            user = cachedUser;
+        } else {
+            user = await User.findOne({emailId : emailId})
+            if (user) {
+                // Cache user data
+                await redisClient.setUserData(user._id.toString(), {
+                    _id: user._id,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    emailId: user.emailId,
+                    photoUrl: user.photoUrl,
+                    about: user.about,
+                    skills: user.skills,
+                    isPremium: user.isPremium,
+                    membershipTier: user.membershipTier
+                });
+                // Cache by email for faster login lookup
+                await redisClient.set(`user:email:${emailId}`, user._id.toString(), 1800);
+            }
+        }
+        
         if(!user){
             throw new Error("Invalid credentials")
         }
@@ -75,11 +130,25 @@ authRouter.post("/login", async(req, res) => {
             const token =  await user.getJWT();
             console.log(token);
             
+            // Store session in Redis
+            await redisClient.setSession(token, {
+                userId: user._id.toString(),
+                emailId: user.emailId,
+                firstName: user.firstName
+            });
+            
             //Add a token to cookie and send the response back to the user
             res.cookie("token", token, {
                 ...cookieBaseOptions,
                 expires: new Date(Date.now() + 8 * 3600000)
             })
+            
+            // Publish user login event to Kafka
+            await kafkaClient.publishUserEvent('USER_LOGIN', user._id.toString(), {
+                emailId: user.emailId,
+                loginTime: new Date().toISOString(),
+                ipAddress: req.ip
+            });
             
             // Send login suggestion email with potential connections
             if (user.emailPreferences.loginSuggestions) {
@@ -115,11 +184,27 @@ authRouter.post("/login", async(req, res) => {
 })
 
 authRouter.post("/logout", async(req, res) => {
-    res.clearCookie("token", {
-        ...cookieBaseOptions,
-        expires: new Date(0),
-    })
-    res.send("Logout successfull");
+    try {
+        const token = req.cookies.token;
+        
+        // Clear session from Redis
+        if (token) {
+            await redisClient.deleteSession(token);
+        }
+        
+        res.clearCookie("token", {
+            ...cookieBaseOptions,
+            expires: new Date(0),
+        })
+        res.send("Logout successfull");
+    } catch (error) {
+        console.error('Error during logout:', error);
+        res.clearCookie("token", {
+            ...cookieBaseOptions,
+            expires: new Date(0),
+        })
+        res.send("Logout successfull");
+    }
 })
 
 module.exports = authRouter

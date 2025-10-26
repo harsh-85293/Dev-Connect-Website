@@ -1,0 +1,31 @@
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant B as Backend
+    participant P as PhonePe API
+    participant DB as MongoDB
+
+    U->>F: Click "Upgrade to Premium"
+    F->>B: POST /payments/phonepe/create
+    B->>B: Verify JWT authentication
+    B->>B: Generate merchant transaction ID
+    B->>B: Create PhonePe payload
+    B->>B: Generate X-VERIFY signature
+    B->>P: POST /pg/v1/pay
+    P-->>B: Payment URL + transaction ID
+    B->>F: Return payment URL
+    F->>U: Redirect to PhonePe payment page
+    
+    U->>P: Complete payment
+    P->>F: Redirect to success page
+    F->>B: POST /payments/phonepe/confirm
+    B->>B: Verify JWT authentication
+    B->>P: GET /pg/v1/status/{merchantId}/{txnId}
+    P-->>B: Payment status
+    B->>B: Verify payment success
+    B->>DB: Update user (isPremium=true, membershipTier)
+    DB-->>B: User updated
+    B->>F: Return updated user data
+    F->>U: Show premium activated
+
+

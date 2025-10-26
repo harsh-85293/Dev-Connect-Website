@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevConnect - System Design Diagrams</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+        }
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+        .diagram-container {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .diagram-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .mermaid {
+            text-align: center;
+        }
+        .description {
+            margin-top: 15px;
+            padding: 15px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            font-style: italic;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 DevConnect - System Design Diagrams</h1>
+        
+        <h2>📋 Workflow Diagrams</h2>
+        
+        <div class="diagram-container">
+            <div class="diagram-title">User Registration & Authentication Workflow</div>
+            <div class="mermaid">
+                sequenceDiagram
+                    participant U as User
+                    participant F as Frontend (React)
+                    participant B as Backend (Node.js)
+                    participant DB as MongoDB
+                    participant E as Email Service
+
+                    U->>F: Fill signup form
+                    F->>B: POST /signup (userData)
+                    B->>B: Validate input data
+                    B->>B: Hash password with bcrypt
+                    B->>DB: Create new user document
+                    DB-->>B: User created successfully
+                    B->>B: Generate JWT token
+                    B->>F: Set HttpOnly cookie + user data
+                    B->>E: Send welcome email (async)
+                    F->>U: Redirect to dashboard
+                    F->>B: GET /profile/view (with cookie)
+                    B->>B: Verify JWT from cookie
+                    B->>DB: Fetch user profile
+                    DB-->>B: User profile data
+                    B->>F: Return profile data
+                    F->>U: Display profile
+            </div>
+            <div class="description">
+                Complete user registration flow including validation, password hashing, JWT token generation, and welcome email notification.
+            </div>
+        </div>
+
+        <div class="diagram-container">
+            <div class="diagram-title">Feed Discovery & ML Recommendations Workflow</div>
+            <div class="mermaid">
+                sequenceDiagram
+                    participant U as User
+                    participant F as Frontend (React)
+                    participant B as Backend (Node.js)
+                    participant ML as ML Engine
+                    participant DB as MongoDB
+
+                    U->>F: Visit feed page
+                    F->>B: GET /feed?ml=true&limit=10
+                    B->>B: Verify JWT authentication
+                    B->>DB: Get user's connection requests
+                    DB-->>B: Existing connections/interactions
+                    B->>B: Build hidden users set
+                    B->>DB: Find available users (exclude hidden)
+                    DB-->>B: Candidate users list
+                    
+                    alt ML Recommendations Enabled
+                        B->>ML: rankUsersByRecommendation(user, candidates)
+                        ML->>ML: Calculate Jaccard similarity
+                        ML->>ML: Calculate cosine similarity
+                        ML->>ML: Calculate complementary skills
+                        ML->>ML: Calculate diversity score
+                        ML->>ML: Calculate experience score
+                        ML->>ML: Generate weighted final score
+                        ML-->>B: Ranked users with scores
+                        B->>B: Apply pagination
+                    else Standard Random Feed
+                        B->>B: Randomize user order
+                    end
+                    
+                    B->>F: Return feed data + analytics
+                    F->>U: Display user cards with recommendations
+            </div>
+            <div class="description">
+                AI-powered feed discovery using multiple similarity algorithms (Jaccard, Cosine, Complementary skills) with fallback to random recommendations.
+            </div>
+        </div>
+
+        <div class="diagram-container">
+            <div class="diagram-title">Real-time Chat Workflow</div>
+            <div class="mermaid">
+                sequenceDiagram
+                    participant U1 as User A
+                    participant U2 as User B
+                    participant F1 as Frontend A
+                    participant F2 as Frontend B
+                    participant S as Socket.IO Server
+                    participant DB as MongoDB
+
+                    U1->>F1: Open chat with User B
+                    F1->>S: Socket connect + register(userId)
+                    S->>S: Map userId to socketId
+                    S->>F1: Connection established
+                    
+                    U2->>F2: Open chat with User A
+                    F2->>S: Socket connect + register(userId)
+                    S->>S: Map userId to socketId
+                    S->>F2: Connection established
+                    
+                    U1->>F1: Type message
+                    F1->>S: emit "private-message" (toUserId, message)
+                    S->>S: Validate sender/recipient
+                    S->>DB: Save message to Messages collection
+                    DB-->>S: Message saved
+                    
+                    S->>F1: emit "private-message" (ack to sender)
+                    S->>F2: emit "private-message" (to recipient)
+                    F1->>U1: Show message sent
+                    F2->>U2: Show incoming message
+                    
+                    Note over S: Presence tracking
+                    S->>F1: emit "presence" (User B online)
+                    S->>F2: emit "presence" (User A online)
+            </div>
+            <div class="description">
+                Real-time messaging system with Socket.IO, message persistence, and user presence tracking.
+            </div>
+        </div>
+
+        <h2>🏗️ High-Level Design (HLD)</h2>
+
+        <div class="diagram-container">
+            <div class="diagram-title">System Architecture Overview</div>
+            <div class="mermaid">
+                graph TB
+                    subgraph "Client Layer"
+                        WEB[Web Browser]
+                        MOBILE[Mobile Browser]
+                    end
+                    
+                    subgraph "CDN & Edge"
+                        VERCEL[Vercel CDN]
+                        STATIC[Static Assets]
+                    end
+                    
+                    subgraph "Frontend Application"
+                        REACT[React 19 + Vite]
+                        REDUX[Redux Toolkit]
+                        TAILWIND[Tailwind CSS + DaisyUI]
+                        SOCKET_CLIENT[Socket.IO Client]
+                    end
+                    
+                    subgraph "Backend Services"
+                        API[Node.js + Express API]
+                        SOCKET[Socket.IO Server]
+                        AUTH[Authentication Service]
+                        ML[ML Recommendation Engine]
+                        EMAIL[Email Service]
+                        PAYMENT[Payment Service]
+                    end
+                    
+                    subgraph "Data Layer"
+                        MONGODB[(MongoDB Atlas)]
+                        REDIS[(Redis Cache)]
+                        FILES[File Storage]
+                    end
+                    
+                    subgraph "External Services"
+                        PHONEPE[PhonePe Payment Gateway]
+                        SMTP[SMTP Email Provider]
+                        MONITORING[Monitoring & Logging]
+                    end
+                    
+                    %% Client connections
+                    WEB --> VERCEL
+                    MOBILE --> VERCEL
+                    
+                    %% CDN to Frontend
+                    VERCEL --> STATIC
+                    STATIC --> REACT
+                    
+                    %% Frontend to Backend
+                    REACT --> API
+                    SOCKET_CLIENT --> SOCKET
+                    
+                    %% Backend services
+                    API --> AUTH
+                    API --> ML
+                    API --> EMAIL
+                    API --> PAYMENT
+                    
+                    %% Data connections
+                    API --> MONGODB
+                    API --> REDIS
+                    SOCKET --> MONGODB
+                    SOCKET --> REDIS
+                    
+                    %% External integrations
+                    PAYMENT --> PHONEPE
+                    EMAIL --> SMTP
+                    API --> MONITORING
+                    
+                    %% Styling
+                    classDef frontend fill:#e1f5fe
+                    classDef backend fill:#f3e5f5
+                    classDef data fill:#e8f5e8
+                    classDef external fill:#fff3e0
+                    
+                    class REACT,REDUX,TAILWIND,SOCKET_CLIENT frontend
+                    class API,SOCKET,AUTH,ML,EMAIL,PAYMENT backend
+                    class MONGODB,REDIS,FILES data
+                    class PHONEPE,SMTP,MONITORING external
+            </div>
+            <div class="description">
+                Complete system architecture showing client layer, CDN, frontend application, backend services, data layer, and external integrations.
+            </div>
+        </div>
+
+        <h2>🔧 Low-Level Design (LLD)</h2>
+
+        <div class="diagram-container">
+            <div class="diagram-title">Database Schema Design</div>
+            <div class="mermaid">
+                erDiagram
+                    USER {
+                        ObjectId _id PK
+                        String firstName
+                        String lastName
+                        String emailId UK
+                        String password
+                        Number age
+                        String gender
+                        String photoUrl
+                        String about
+                        Array skills
+                        Object emailPreferences
+                        Boolean isPremium
+                        Date premiumActivatedAt
+                        String membershipTier
+                        Date createdAt
+                        Date updatedAt
+                    }
+                    
+                    MESSAGE {
+                        ObjectId _id PK
+                        ObjectId fromUserId FK
+                        ObjectId toUserId FK
+                        String text
+                        Date ts
+                        Date createdAt
+                        Date updatedAt
+                    }
+                    
+                    CONNECTIONREQUEST {
+                        ObjectId _id PK
+                        ObjectId fromUserId FK
+                        ObjectId toUserId FK
+                        String status
+                        Date createdAt
+                        Date updatedAt
+                    }
+                    
+                    PAYMENT {
+                        ObjectId _id PK
+                        ObjectId userId FK
+                        String providerOrderId
+                        Number amount
+                        String currency
+                        String status
+                        Object providerPayload
+                        Date createdAt
+                        Date processedAt
+                    }
+                    
+                    USER ||--o{ MESSAGE : sends
+                    USER ||--o{ MESSAGE : receives
+                    USER ||--o{ CONNECTIONREQUEST : sends
+                    USER ||--o{ CONNECTIONREQUEST : receives
+                    USER ||--o{ PAYMENT : makes
+            </div>
+            <div class="description">
+                Complete database schema showing User, Message, ConnectionRequest, and Payment entities with their relationships and fields.
+            </div>
+        </div>
+
+        <div class="diagram-container">
+            <div class="diagram-title">ML Recommendation Engine Design</div>
+            <div class="mermaid">
+                graph TB
+                    subgraph "Input Processing"
+                        USER_INPUT[Current User Profile]
+                        CANDIDATES[Available Users]
+                        FILTERS[Exclusion Filters]
+                    end
+                    
+                    subgraph "Feature Extraction"
+                        SKILLS_NORMALIZE[Skill Normalization]
+                        CATEGORY_MAPPING[Category Mapping]
+                        WEIGHT_CALCULATION[Weight Calculation]
+                    end
+                    
+                    subgraph "Similarity Algorithms"
+                        JACCARD[Jaccard Similarity]
+                        COSINE[Cosine Similarity]
+                        COMPLEMENTARY[Complementary Skills]
+                        DIVERSITY[Skill Diversity]
+                        EXPERIENCE[Experience Level]
+                    end
+                    
+                    subgraph "Scoring & Ranking"
+                        WEIGHTED_SCORE[Weighted Score Calculation]
+                        RANKING[User Ranking]
+                        FILTERING[Score Filtering]
+                        PAGINATION[Pagination]
+                    end
+                    
+                    subgraph "Output Generation"
+                        RECOMMENDATIONS[Ranked Recommendations]
+                        REASONING[Recommendation Reasoning]
+                        METADATA[Analytics Metadata]
+                    end
+                    
+                    %% Processing flow
+                    USER_INPUT --> SKILLS_NORMALIZE
+                    CANDIDATES --> SKILLS_NORMALIZE
+                    FILTERS --> SKILLS_NORMALIZE
+                    
+                    SKILLS_NORMALIZE --> CATEGORY_MAPPING
+                    CATEGORY_MAPPING --> WEIGHT_CALCULATION
+                    
+                    WEIGHT_CALCULATION --> JACCARD
+                    WEIGHT_CALCULATION --> COSINE
+                    WEIGHT_CALCULATION --> COMPLEMENTARY
+                    WEIGHT_CALCULATION --> DIVERSITY
+                    WEIGHT_CALCULATION --> EXPERIENCE
+                    
+                    JACCARD --> WEIGHTED_SCORE
+                    COSINE --> WEIGHTED_SCORE
+                    COMPLEMENTARY --> WEIGHTED_SCORE
+                    DIVERSITY --> WEIGHTED_SCORE
+                    EXPERIENCE --> WEIGHTED_SCORE
+                    
+                    WEIGHTED_SCORE --> RANKING
+                    RANKING --> FILTERING
+                    FILTERING --> PAGINATION
+                    
+                    PAGINATION --> RECOMMENDATIONS
+                    RECOMMENDATIONS --> REASONING
+                    RECOMMENDATIONS --> METADATA
+                    
+                    %% Styling
+                    classDef input fill:#e3f2fd
+                    classDef feature fill:#f1f8e9
+                    classDef algorithm fill:#fce4ec
+                    classDef scoring fill:#fff8e1
+                    classDef output fill:#e8f5e8
+                    
+                    class USER_INPUT,CANDIDATES,FILTERS input
+                    class SKILLS_NORMALIZE,CATEGORY_MAPPING,WEIGHT_CALCULATION feature
+                    class JACCARD,COSINE,COMPLEMENTARY,DIVERSITY,EXPERIENCE algorithm
+                    class WEIGHTED_SCORE,RANKING,FILTERING,PAGINATION scoring
+                    class RECOMMENDATIONS,REASONING,METADATA output
+            </div>
+            <div class="description">
+                ML recommendation engine architecture showing input processing, feature extraction, similarity algorithms, scoring, and output generation.
+            </div>
+        </div>
+
+        <div class="diagram-container">
+            <div class="diagram-title">Payment Integration Workflow</div>
+            <div class="mermaid">
+                sequenceDiagram
+                    participant U as User
+                    participant F as Frontend
+                    participant B as Backend
+                    participant P as PhonePe API
+                    participant DB as MongoDB
+
+                    U->>F: Click "Upgrade to Premium"
+                    F->>B: POST /payments/phonepe/create
+                    B->>B: Verify JWT authentication
+                    B->>B: Generate merchant transaction ID
+                    B->>B: Create PhonePe payload
+                    B->>B: Generate X-VERIFY signature
+                    B->>P: POST /pg/v1/pay
+                    P-->>B: Payment URL + transaction ID
+                    B->>F: Return payment URL
+                    F->>U: Redirect to PhonePe payment page
+                    
+                    U->>P: Complete payment
+                    P->>F: Redirect to success page
+                    F->>B: POST /payments/phonepe/confirm
+                    B->>B: Verify JWT authentication
+                    B->>P: GET /pg/v1/status/{merchantId}/{txnId}
+                    P-->>B: Payment status
+                    B->>B: Verify payment success
+                    B->>DB: Update user (isPremium=true, membershipTier)
+                    DB-->>B: User updated
+                    B->>F: Return updated user data
+                    F->>U: Show premium activated
+            </div>
+            <div class="description">
+                Complete payment integration workflow with PhonePe, including payment creation, verification, and premium activation.
+            </div>
+        </div>
+
+        <div class="diagram-container">
+            <div class="diagram-title">Authentication & Authorization Flow</div>
+            <div class="mermaid">
+                graph TB
+                    subgraph "Authentication Process"
+                        LOGIN_REQUEST[Login Request]
+                        CREDENTIAL_CHECK[Validate Credentials]
+                        JWT_GENERATION[Generate JWT Token]
+                        COOKIE_SET[Set HttpOnly Cookie]
+                        USER_CONTEXT[Attach User Context]
+                    end
+                    
+                    subgraph "Authorization Middleware"
+                        TOKEN_EXTRACT[Extract Token from Cookie]
+                        TOKEN_VERIFY[Verify JWT Signature]
+                        USER_LOOKUP[Lookup User in Database]
+                        REQUEST_ATTACH[Attach User to Request]
+                    end
+                    
+                    subgraph "Protected Routes"
+                        PROFILE_ROUTES[Profile Routes]
+                        FEED_ROUTES[Feed Routes]
+                        CHAT_ROUTES[Chat Routes]
+                        PAYMENT_ROUTES[Payment Routes]
+                    end
+                    
+                    subgraph "Socket Authentication"
+                        SOCKET_CONNECT[Socket Connection]
+                        SOCKET_TOKEN[Token Validation]
+                        SOCKET_REGISTER[User Registration]
+                        PRESENCE_TRACK[Presence Tracking]
+                    end
+                    
+                    %% Authentication flow
+                    LOGIN_REQUEST --> CREDENTIAL_CHECK
+                    CREDENTIAL_CHECK --> JWT_GENERATION
+                    JWT_GENERATION --> COOKIE_SET
+                    COOKIE_SET --> USER_CONTEXT
+                    
+                    %% Authorization flow
+                    USER_CONTEXT --> TOKEN_EXTRACT
+                    TOKEN_EXTRACT --> TOKEN_VERIFY
+                    TOKEN_VERIFY --> USER_LOOKUP
+                    USER_LOOKUP --> REQUEST_ATTACH
+                    
+                    %% Route protection
+                    REQUEST_ATTACH --> PROFILE_ROUTES
+                    REQUEST_ATTACH --> FEED_ROUTES
+                    REQUEST_ATTACH --> CHAT_ROUTES
+                    REQUEST_ATTACH --> PAYMENT_ROUTES
+                    
+                    %% Socket authentication
+                    SOCKET_CONNECT --> SOCKET_TOKEN
+                    SOCKET_TOKEN --> SOCKET_REGISTER
+                    SOCKET_REGISTER --> PRESENCE_TRACK
+                    
+                    %% Styling
+                    classDef auth fill:#e3f2fd
+                    classDef middleware fill:#f1f8e9
+                    classDef routes fill:#fce4ec
+                    classDef socket fill:#fff8e1
+                    
+                    class LOGIN_REQUEST,CREDENTIAL_CHECK,JWT_GENERATION,COOKIE_SET,USER_CONTEXT auth
+                    class TOKEN_EXTRACT,TOKEN_VERIFY,USER_LOOKUP,REQUEST_ATTACH middleware
+                    class PROFILE_ROUTES,FEED_ROUTES,CHAT_ROUTES,PAYMENT_ROUTES routes
+                    class SOCKET_CONNECT,SOCKET_TOKEN,SOCKET_REGISTER,PRESENCE_TRACK socket
+            </div>
+            <div class="description">
+                Complete authentication and authorization flow including JWT token management, middleware protection, and Socket.IO authentication.
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 8px;">
+            <h3 style="color: #2c3e50; margin-bottom: 10px;">📊 DevConnect System Design Summary</h3>
+            <p style="color: #7f8c8d; font-size: 1.1em;">
+                A comprehensive full-stack developer networking platform featuring AI-powered recommendations, 
+                real-time messaging, premium subscriptions, and modern architecture patterns.
+            </p>
+            <div style="margin-top: 20px;">
+                <span style="background: #3498db; color: white; padding: 8px 16px; border-radius: 20px; margin: 5px; display: inline-block;">React 19 + Vite</span>
+                <span style="background: #e74c3c; color: white; padding: 8px 16px; border-radius: 20px; margin: 5px; display: inline-block;">Node.js + Express</span>
+                <span style="background: #27ae60; color: white; padding: 8px 16px; border-radius: 20px; margin: 5px; display: inline-block;">MongoDB</span>
+                <span style="background: #f39c12; color: white; padding: 8px 16px; border-radius: 20px; margin: 5px; display: inline-block;">Socket.IO</span>
+                <span style="background: #9b59b6; color: white; padding: 8px 16px; border-radius: 20px; margin: 5px; display: inline-block;">ML Engine</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            },
+            sequence: {
+                diagramMarginX: 50,
+                diagramMarginY: 10,
+                actorMargin: 50,
+                width: 150,
+                height: 65,
+                boxMargin: 10,
+                boxTextMargin: 5,
+                noteMargin: 10,
+                messageMargin: 35
+            },
+            er: {
+                useMaxWidth: true
+            }
+        });
+    </script>
+</body>
+</html>
+
+

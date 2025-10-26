@@ -1,0 +1,65 @@
+graph TB
+    subgraph "Authentication Process"
+        LOGIN_REQUEST[Login Request]
+        CREDENTIAL_CHECK[Validate Credentials]
+        JWT_GENERATION[Generate JWT Token]
+        COOKIE_SET[Set HttpOnly Cookie]
+        USER_CONTEXT[Attach User Context]
+    end
+    
+    subgraph "Authorization Middleware"
+        TOKEN_EXTRACT[Extract Token from Cookie]
+        TOKEN_VERIFY[Verify JWT Signature]
+        USER_LOOKUP[Lookup User in Database]
+        REQUEST_ATTACH[Attach User to Request]
+    end
+    
+    subgraph "Protected Routes"
+        PROFILE_ROUTES[Profile Routes]
+        FEED_ROUTES[Feed Routes]
+        CHAT_ROUTES[Chat Routes]
+        PAYMENT_ROUTES[Payment Routes]
+    end
+    
+    subgraph "Socket Authentication"
+        SOCKET_CONNECT[Socket Connection]
+        SOCKET_TOKEN[Token Validation]
+        SOCKET_REGISTER[User Registration]
+        PRESENCE_TRACK[Presence Tracking]
+    end
+    
+    %% Authentication flow
+    LOGIN_REQUEST --> CREDENTIAL_CHECK
+    CREDENTIAL_CHECK --> JWT_GENERATION
+    JWT_GENERATION --> COOKIE_SET
+    COOKIE_SET --> USER_CONTEXT
+    
+    %% Authorization flow
+    USER_CONTEXT --> TOKEN_EXTRACT
+    TOKEN_EXTRACT --> TOKEN_VERIFY
+    TOKEN_VERIFY --> USER_LOOKUP
+    USER_LOOKUP --> REQUEST_ATTACH
+    
+    %% Route protection
+    REQUEST_ATTACH --> PROFILE_ROUTES
+    REQUEST_ATTACH --> FEED_ROUTES
+    REQUEST_ATTACH --> CHAT_ROUTES
+    REQUEST_ATTACH --> PAYMENT_ROUTES
+    
+    %% Socket authentication
+    SOCKET_CONNECT --> SOCKET_TOKEN
+    SOCKET_TOKEN --> SOCKET_REGISTER
+    SOCKET_REGISTER --> PRESENCE_TRACK
+    
+    %% Styling
+    classDef auth fill:#e3f2fd
+    classDef middleware fill:#f1f8e9
+    classDef routes fill:#fce4ec
+    classDef socket fill:#fff8e1
+    
+    class LOGIN_REQUEST,CREDENTIAL_CHECK,JWT_GENERATION,COOKIE_SET,USER_CONTEXT auth
+    class TOKEN_EXTRACT,TOKEN_VERIFY,USER_LOOKUP,REQUEST_ATTACH middleware
+    class PROFILE_ROUTES,FEED_ROUTES,CHAT_ROUTES,PAYMENT_ROUTES routes
+    class SOCKET_CONNECT,SOCKET_TOKEN,SOCKET_REGISTER,PRESENCE_TRACK socket
+
+

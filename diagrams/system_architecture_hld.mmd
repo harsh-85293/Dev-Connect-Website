@@ -1,0 +1,105 @@
+graph TB
+    subgraph "Client Layer"
+        WEB[Web Browser]
+        MOBILE[Mobile Browser]
+    end
+    
+    subgraph "CDN & Edge"
+        VERCEL[Vercel CDN]
+        STATIC[Static Assets]
+    end
+    
+    subgraph "Frontend Application"
+        REACT[React 19 + Vite]
+        REDUX[Redux Toolkit]
+        TAILWIND[Tailwind CSS + DaisyUI]
+        SOCKET_CLIENT[Socket.IO Client]
+    end
+    
+    subgraph "Load Balancer & Proxy"
+        LB[Load Balancer]
+        PROXY[Reverse Proxy]
+    end
+    
+    subgraph "Backend Services"
+        API[Node.js + Express API]
+        SOCKET[Socket.IO Server]
+        AUTH[Authentication Service]
+        ML[ML Recommendation Engine]
+        EMAIL[Email Service]
+        PAYMENT[Payment Service]
+    end
+    
+    subgraph "Data Layer"
+        MONGODB[(MongoDB Atlas)]
+        REDIS[(Redis Cache)]
+        FILES[File Storage]
+    end
+    
+    subgraph "External Services"
+        PHONEPE[PhonePe Payment Gateway]
+        SMTP[SMTP Email Provider]
+        MONITORING[Monitoring & Logging]
+    end
+    
+    subgraph "Background Services"
+        CRON[Cron Jobs]
+        WORKERS[Background Workers]
+        QUEUE[Job Queue]
+    end
+    
+    %% Client connections
+    WEB --> VERCEL
+    MOBILE --> VERCEL
+    
+    %% CDN to Frontend
+    VERCEL --> STATIC
+    STATIC --> REACT
+    
+    %% Frontend to Backend
+    REACT --> API
+    SOCKET_CLIENT --> SOCKET
+    
+    %% Load balancing
+    API --> LB
+    SOCKET --> LB
+    LB --> PROXY
+    
+    %% Backend services
+    PROXY --> API
+    PROXY --> SOCKET
+    API --> AUTH
+    API --> ML
+    API --> EMAIL
+    API --> PAYMENT
+    
+    %% Data connections
+    API --> MONGODB
+    API --> REDIS
+    SOCKET --> MONGODB
+    SOCKET --> REDIS
+    
+    %% External integrations
+    PAYMENT --> PHONEPE
+    EMAIL --> SMTP
+    API --> MONITORING
+    
+    %% Background processing
+    CRON --> EMAIL
+    WORKERS --> QUEUE
+    QUEUE --> EMAIL
+    QUEUE --> ML
+    
+    %% Styling
+    classDef frontend fill:#e1f5fe
+    classDef backend fill:#f3e5f5
+    classDef data fill:#e8f5e8
+    classDef external fill:#fff3e0
+    classDef background fill:#fce4ec
+    
+    class REACT,REDUX,TAILWIND,SOCKET_CLIENT frontend
+    class API,SOCKET,AUTH,ML,EMAIL,PAYMENT backend
+    class MONGODB,REDIS,FILES data
+    class PHONEPE,SMTP,MONITORING external
+    class CRON,WORKERS,QUEUE background
+

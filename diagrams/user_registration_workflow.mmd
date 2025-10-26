@@ -1,0 +1,24 @@
+sequenceDiagram
+    participant U as User
+    participant F as Frontend (React)
+    participant B as Backend (Node.js)
+    participant DB as MongoDB
+    participant E as Email Service
+
+    U->>F: Fill signup form
+    F->>B: POST /signup (userData)
+    B->>B: Validate input data
+    B->>B: Hash password with bcrypt
+    B->>DB: Create new user document
+    DB-->>B: User created successfully
+    B->>B: Generate JWT token
+    B->>F: Set HttpOnly cookie + user data
+    B->>E: Send welcome email (async)
+    F->>U: Redirect to dashboard
+    F->>B: GET /profile/view (with cookie)
+    B->>B: Verify JWT from cookie
+    B->>DB: Fetch user profile
+    DB-->>B: User profile data
+    B->>F: Return profile data
+    F->>U: Display profile
+

@@ -1,0 +1,34 @@
+sequenceDiagram
+    participant U1 as User A
+    participant F as Frontend
+    participant B as Backend
+    participant DB as MongoDB
+    participant E as Email Service
+
+    U1->>F: Click "Connect" on user card
+    F->>B: POST /request/send (targetUserId)
+    B->>B: Verify JWT authentication
+    B->>B: Validate request (not self, not duplicate)
+    B->>DB: Create connection request
+    DB-->>B: Request created
+    B->>F: Success response
+    
+    Note over B,E: Async email notification
+    B->>E: Send connection request email
+    E-->>B: Email sent
+    
+    Note over U2: User B receives notification
+    U2->>F: Visit requests page
+    F->>B: GET /user/requests/received
+    B->>DB: Find pending requests
+    DB-->>B: Connection requests
+    B->>F: Return requests list
+    F->>U2: Display pending requests
+    
+    U2->>F: Accept/Reject request
+    F->>B: PATCH /user/requests/:id/respond
+    B->>DB: Update request status
+    DB-->>B: Status updated
+    B->>F: Success response
+    F->>U2: Show updated status
+

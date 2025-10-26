@@ -43,8 +43,11 @@ This project demonstrates a complete professional networking system with fronten
 
 - **Frontend**: React 19 + Redux Toolkit + Tailwind CSS + DaisyUI
 - **Backend**: Node.js + Express + MongoDB + Mongoose
+- **Caching**: Redis for session management and data caching
+- **Message Queue**: Kafka for event streaming and analytics
 - **API**: RESTful endpoints with JWT authentication
 - **State Management**: Redux with localStorage persistence
+- **Real-time**: Socket.io with Redis adapter for scalability
 
 ## 📱 Usage
 
@@ -88,9 +91,41 @@ const freshData = await profileAPI.refreshProfile();
 
 ## 🚦 Getting Started
 
-1. **Backend**: Start MongoDB and run `npm start` in backend directory
-2. **Frontend**: Run `npm run dev` in frontend directory
-3. **Access**: Navigate to `http://localhost:5173`
+### Prerequisites
+- Docker (for Redis and Kafka)
+- MongoDB
+- Node.js 18+
+
+### Quick Start
+
+1. **Start Services** (Redis, Kafka, Zookeeper):
+   ```bash
+   docker-compose up -d
+   ```
+
+2. **Backend**: 
+   ```bash
+   cd BACKEND
+   npm install
+   npm run dev
+   ```
+
+3. **Frontend**: 
+   ```bash
+   cd Frontend
+   npm install
+   npm run dev
+   ```
+
+4. **Access**: Navigate to `http://localhost:5173`
+
+### Docker Services
+- **Redis**: `localhost:6379` - For caching and session management
+- **Kafka**: `localhost:9092` - For event streaming
+- **Kafka UI**: `http://localhost:8080` - Kafka monitoring
+- **Redis Commander**: `http://localhost:8081` - Redis GUI
+
+See `DOCUMENTATION/KAFKA_REDIS_ARCHITECTURE.md` and `REDIS_KAFKA_INTEGRATION_FILES/README.md` for detailed setup.
 
 ## 🔄 API Response Format
 

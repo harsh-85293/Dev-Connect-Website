@@ -1,0 +1,33 @@
+sequenceDiagram
+    participant U as User
+    participant F as Frontend (React)
+    participant B as Backend (Node.js)
+    participant ML as ML Engine
+    participant DB as MongoDB
+
+    U->>F: Visit feed page
+    F->>B: GET /feed?ml=true&limit=10
+    B->>B: Verify JWT authentication
+    B->>DB: Get user's connection requests
+    DB-->>B: Existing connections/interactions
+    B->>B: Build hidden users set
+    B->>DB: Find available users (exclude hidden)
+    DB-->>B: Candidate users list
+    
+    alt ML Recommendations Enabled
+        B->>ML: rankUsersByRecommendation(user, candidates)
+        ML->>ML: Calculate Jaccard similarity
+        ML->>ML: Calculate cosine similarity
+        ML->>ML: Calculate complementary skills
+        ML->>ML: Calculate diversity score
+        ML->>ML: Calculate experience score
+        ML->>ML: Generate weighted final score
+        ML-->>B: Ranked users with scores
+        B->>B: Apply pagination
+    else Standard Random Feed
+        B->>B: Randomize user order
+    end
+    
+    B->>F: Return feed data + analytics
+    F->>U: Display user cards with recommendations
+
