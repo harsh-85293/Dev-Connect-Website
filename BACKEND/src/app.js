@@ -182,19 +182,37 @@ async function initializeConnections() {
     await connectdb();
     console.log("Database connection successful");
 
-    // Connect to Redis
-    await redisClient.connect();
-    console.log("Redis connection successful");
+    // Connect to Redis (optional)
+    try {
+      await redisClient.connect();
+      if (redisClient.isConnected) {
+        console.log("Redis connection successful");
+      } else {
+        console.warn("Redis not enabled; continuing without Redis");
+      }
+    } catch (e) {
+      console.warn("Redis connection failed; continuing without Redis:", e.message);
+    }
 
-    // Connect to Kafka
-    await kafkaClient.connect();
-    console.log("Kafka connection successful");
+    // Connect to Kafka (optional)
+    try {
+      await kafkaClient.connect();
+      if (kafkaClient.isConnected) {
+        console.log("Kafka connection successful");
+      } else {
+        console.warn("Kafka not enabled; continuing without Kafka");
+      }
+    } catch (e) {
+      console.warn("Kafka connection failed; continuing without Kafka:", e.message);
+    }
 
     // Initialize User model
     await User.init(); // ensure unique indexes
 
-    // Start Kafka consumers
-    await startKafkaConsumers();
+    // Start Kafka consumers if Kafka is connected
+    if (kafkaClient.isConnected) {
+      await startKafkaConsumers();
+    }
 
     // Start server
     server.listen(process.env.PORT || 3000, () =>
@@ -203,7 +221,10 @@ async function initializeConnections() {
 
   } catch (err) {
     console.error("Error initializing connections:", err.message);
-    process.exit(1);
+    // Keep server up even if optional deps fail
+    server.listen(process.env.PORT || 3000, () =>
+      console.log(`Server started with degraded mode on port ${process.env.PORT || 3000}`)
+    );
   }
 }
 

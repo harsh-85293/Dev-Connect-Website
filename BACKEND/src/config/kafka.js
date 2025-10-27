@@ -1,4 +1,12 @@
-const { Kafka } = require('kafkajs');
+// Kafka is optional for deployments that don't run a broker. If kafkajs is
+// unavailable or KAFKA_BROKERS env not provided, export a no-op client that
+// preserves the public API.
+let KafkaLib = null;
+try {
+  KafkaLib = require('kafkajs');
+} catch (e) {
+  // fall back to no-op implementation
+}
 
 class KafkaClient {
   constructor() {
@@ -7,10 +15,15 @@ class KafkaClient {
     this.consumer = null;
     this.admin = null;
     this.isConnected = false;
+    this.isEnabled = Boolean(KafkaLib) && Boolean(process.env.KAFKA_BROKERS);
   }
 
   async connect() {
     try {
+      if (!this.isEnabled) {
+        console.warn('Kafka disabled: kafkajs not installed or KAFKA_BROKERS not set.');
+        return false;
+      }
       const kafkaConfig = {
         clientId: process.env.KAFKA_CLIENT_ID || 'devconnect-app',
         brokers: (process.env.KAFKA_BROKERS || 'localhost:9092').split(','),
@@ -22,9 +35,9 @@ class KafkaClient {
         requestTimeout: 25000,
       };
 
-      this.kafka = new Kafka(kafkaConfig);
+      this.kafka = new KafkaLib.Kafka(kafkaConfig);
       this.producer = this.kafka.producer({
-        createPartitioner: require('kafkajs').Partitioners.LegacyPartitioner
+        createPartitioner: KafkaLib.Partitioners.LegacyPartitioner
       });
       this.consumer = this.kafka.consumer({ groupId: 'devconnect-group' });
       this.admin = this.kafka.admin();
@@ -43,7 +56,9 @@ class KafkaClient {
     } catch (error) {
       console.error('Failed to connect to Kafka:', error);
       this.isConnected = false;
-      throw error;
+      // Don't crash the app; continue without Kafka
+      this.isEnabled = false;
+      return false;
     }
   }
 

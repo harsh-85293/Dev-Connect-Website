@@ -1,32 +1,37 @@
-const redis = require('redis');
+// Redis is optional in some deployments (e.g., Render without Redis add-on).
+// If the module isn't installed or no URL is provided, we export a no-op client
+// that preserves the public API and avoids crashing the app.
+
+let redisLib = null;
+try {
+  // Attempt to load the redis library if available
+  // This will throw if not installed; we will fall back to a no-op client
+  redisLib = require('redis');
+} catch (e) {
+  // Intentionally ignore; we'll use a no-op below
+}
 
 class RedisClient {
   constructor() {
     this.client = null;
     this.isConnected = false;
+    this.isEnabled = Boolean(redisLib) && Boolean(process.env.REDIS_URL);
   }
 
   async connect() {
     try {
-      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-      
-      this.client = redis.createClient({
+      if (!this.isEnabled) {
+        console.warn('Redis disabled: missing module or REDIS_URL env. Running without Redis.');
+        return false;
+      }
+
+      const redisUrl = process.env.REDIS_URL;
+
+      this.client = redisLib.createClient({
         url: redisUrl,
-        retry_strategy: (options) => {
-          if (options.error && options.error.code === 'ECONNREFUSED') {
-            console.error('Redis server connection refused');
-            return new Error('Redis server connection refused');
-          }
-          if (options.total_retry_time > 1000 * 60 * 60) {
-            console.error('Redis retry time exhausted');
-            return new Error('Redis retry time exhausted');
-          }
-          if (options.attempt > 10) {
-            console.error('Redis max retry attempts reached');
-            return undefined;
-          }
-          return Math.min(options.attempt * 100, 3000);
-        }
+        socket: {
+          reconnectStrategy: (retries) => Math.min(retries * 100, 3000),
+        },
       });
 
       this.client.on('error', (err) => {
@@ -53,7 +58,11 @@ class RedisClient {
       return this.client;
     } catch (error) {
       console.error('Failed to connect to Redis:', error);
-      throw error;
+      // Do not crash the app; keep running without Redis
+      this.isEnabled = false;
+      this.client = null;
+      this.isConnected = false;
+      return false;
     }
   }
 
@@ -66,7 +75,7 @@ class RedisClient {
 
   // Cache methods
   async set(key, value, expireInSeconds = 3600) {
-    if (!this.isConnected) return null;
+    if (!this.isConnected || !this.client) return null;
     try {
       const serializedValue = JSON.stringify(value);
       await this.client.setEx(key, expireInSeconds, serializedValue);
@@ -78,7 +87,7 @@ class RedisClient {
   }
 
   async get(key) {
-    if (!this.isConnected) return null;
+    if (!this.isConnected || !this.client) return null;
     try {
       const value = await this.client.get(key);
       return value ? JSON.parse(value) : null;
@@ -89,7 +98,7 @@ class RedisClient {
   }
 
   async del(key) {
-    if (!this.isConnected) return false;
+    if (!this.isConnected || !this.client) return false;
     try {
       await this.client.del(key);
       return true;
@@ -100,7 +109,7 @@ class RedisClient {
   }
 
   async exists(key) {
-    if (!this.isConnected) return false;
+    if (!this.isConnected || !this.client) return false;
     try {
       const result = await this.client.exists(key);
       return result === 1;
@@ -162,7 +171,7 @@ class RedisClient {
 
   // Rate limiting
   async incrementRateLimit(key, expireInSeconds = 60) {
-    if (!this.isConnected) return 0;
+    if (!this.isConnected || !this.client) return 0;
     try {
       const current = await this.client.incr(key);
       if (current === 1) {
