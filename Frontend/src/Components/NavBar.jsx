@@ -183,12 +183,12 @@ const NavBar = () => {
               {/* User info header */}
               <li className="menu-title text-base-content/70 mb-2">
                 <div className="flex items-center gap-3 pb-2 border-b border-gray-200">
-                  <div className="avatar">
+                  <div className="avatar flex-shrink-0">
                     <div className="w-8 h-8 rounded-full">
                       <img src={user.photoUrl || "https://tse2.mm.bing.net/th/id/OIP.GDzD9q-sQFLKPcjBMUOBOQHaHa?pid=Api&P=0&h=220"} alt="avatar" />
                     </div>
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="font-semibold text-base-content flex items-center gap-2">
                       {user.firstName} {user.lastName}
                       {user.isPremium && (
@@ -201,7 +201,7 @@ const NavBar = () => {
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-base-content/60">{user.emailId}</div>
+                    <div className="text-xs text-base-content/60 break-words overflow-wrap-anywhere">{user.emailId}</div>
                   </div>
                 </div>
               </li>
