@@ -6,42 +6,50 @@ const AIChatbot = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true);
   const messagesEndRef = useRef(null);
 
-  // Sample AI responses for professional networking
-  const aiResponses = {
-    greeting: [
-      `Hi ${user?.firstName || 'there'}! 👋 I'm your DevConnect AI assistant. I'm here to help you with networking tips, profile optimization, and career advice. How can I assist you today?`,
-      `Hello! 🌟 Welcome to DevConnect! I can help you improve your profile, suggest networking strategies, or answer questions about connecting with other developers. What would you like to know?`
-    ],
-    profile: [
-      "Here are some tips to optimize your profile:\n\n📝 **About Section**: Write a compelling summary highlighting your expertise and goals\n💼 **Skills**: Add relevant technical skills and frameworks\n📸 **Photo**: Use a professional headshot\n🎯 **Be Specific**: Mention specific technologies you work with\n\nWould you like help with any specific section?",
-      "A strong profile is key to making great connections! Consider:\n\n✨ **Showcase Projects**: Mention notable projects or contributions\n🔗 **GitHub/Portfolio**: Include links to your work\n📍 **Location**: Help others find local networking opportunities\n🎯 **Career Goals**: Be clear about what you're looking for\n\nNeed help with writing any particular section?"
-    ],
-    networking: [
-      "Great networking strategies for developers:\n\n🤝 **Quality over Quantity**: Focus on meaningful connections\n💬 **Personalized Messages**: Always customize connection requests\n🎯 **Common Interests**: Look for shared technologies or goals\n📚 **Knowledge Sharing**: Offer help and ask thoughtful questions\n🌟 **Follow Up**: Stay in touch with your connections\n\nWhat aspect of networking would you like to explore?",
-      "Building your developer network effectively:\n\n🔍 **Research First**: Look at profiles thoroughly before connecting\n💡 **Add Value**: Share insights, resources, or opportunities\n🎪 **Virtual Events**: Attend online tech meetups and conferences\n📝 **Content Creation**: Share your learning journey and projects\n🤖 **Open Source**: Contribute to projects and connect with maintainers\n\nWhich networking area interests you most?"
-    ],
-    career: [
-      "Career development tips for developers:\n\n📈 **Continuous Learning**: Stay updated with latest technologies\n🎯 **Specialization**: Develop deep expertise in specific areas\n🏗️ **Build Portfolio**: Create projects that showcase your skills\n👥 **Mentorship**: Both seek mentors and mentor others\n📊 **Track Growth**: Document your achievements and learnings\n\nWhat career aspect would you like guidance on?",
-      "Advancing your tech career:\n\n🚀 **Side Projects**: Build applications that solve real problems\n📢 **Personal Branding**: Share your expertise through blogs/talks\n🎓 **Certifications**: Consider relevant industry certifications\n🤝 **Team Collaboration**: Practice working with diverse teams\n💼 **Industry Knowledge**: Understand business impacts of technology\n\nWhich area would you like to focus on?"
-    ],
-    skills: [
-      "Popular skills in demand for developers:\n\n**Frontend**: React, Vue, Angular, TypeScript\n**Backend**: Node.js, Python, Java, Go, Rust\n**Cloud**: AWS, Azure, GCP, Docker, Kubernetes\n**Database**: PostgreSQL, MongoDB, Redis\n**DevOps**: CI/CD, Terraform, Jenkins\n**Mobile**: React Native, Flutter, Swift, Kotlin\n\nWhich technology stack interests you most?",
-      "Trending technologies to consider learning:\n\n🔥 **AI/ML**: Python, TensorFlow, PyTorch\n⚡ **Performance**: WebAssembly, Rust, Go\n☁️ **Cloud Native**: Microservices, Serverless\n🔐 **Security**: Cybersecurity, Ethical Hacking\n📱 **Cross-Platform**: React Native, Flutter\n🌐 **Web3**: Blockchain, Smart Contracts\n\nWhat technology area excites you?"
-    ],
-    default: [
-      "I'm here to help with professional networking and career development! I can assist with:\n\n🔹 Profile optimization tips\n🔹 Networking strategies\n🔹 Career development advice\n🔹 Technology trends and skills\n🔹 Industry insights\n\nWhat would you like to explore?",
-      "As your DevConnect AI assistant, I can help you with:\n\n✨ **Profile Enhancement**: Make your profile stand out\n🤝 **Networking Tips**: Build meaningful professional relationships\n📈 **Career Growth**: Advance your development career\n💡 **Skill Development**: Learn about in-demand technologies\n\nHow can I assist you today?"
-    ]
+  // Call OpenAI API for intelligent responses
+  const callOpenAI = async (userMessage, conversationHistory) => {
+    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful AI assistant for DevConnect, a professional networking platform for developers. Help users with networking tips, profile optimization, career advice, and technology trends. Be friendly, professional, and concise. Format your responses with emojis and bullet points when appropriate.'
+          },
+          ...conversationHistory,
+          {
+            role: 'user',
+            content: userMessage
+          }
+        ],
+        max_tokens: 500,
+        temperature: 0.7
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.choices[0].message.content;
   };
 
   // Initialize with welcome message
   useEffect(() => {
     const welcomeMessage = {
       id: Date.now(),
-      text: aiResponses.greeting[0],
+      text: `Hi ${user?.firstName || 'there'}! 👋 I'm your DevConnect AI assistant powered by OpenAI. I'm here to help you with networking tips, profile optimization, and career advice. How can I assist you today?`,
       sender: 'ai',
       timestamp: new Date()
     };
@@ -52,30 +60,6 @@ const AIChatbot = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  const getAIResponse = (message) => {
-    const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.includes('profile') || lowerMessage.includes('bio') || lowerMessage.includes('about')) {
-      return aiResponses.profile[Math.floor(Math.random() * aiResponses.profile.length)];
-    } else if (lowerMessage.includes('network') || lowerMessage.includes('connect') || lowerMessage.includes('relationship')) {
-      return aiResponses.networking[Math.floor(Math.random() * aiResponses.networking.length)];
-    } else if (lowerMessage.includes('career') || lowerMessage.includes('job') || lowerMessage.includes('growth')) {
-      return aiResponses.career[Math.floor(Math.random() * aiResponses.career.length)];
-    } else if (lowerMessage.includes('skill') || lowerMessage.includes('technology') || lowerMessage.includes('learn')) {
-      return aiResponses.skills[Math.floor(Math.random() * aiResponses.skills.length)];
-    } else if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-      return aiResponses.greeting[Math.floor(Math.random() * aiResponses.greeting.length)];
-    } else if (lowerMessage.includes('connection') || lowerMessage.includes('request') || lowerMessage.includes('connect')) {
-      return "Here are some DevConnect-specific tips:\n\n🎯 **Quality Connections**: Review profiles thoroughly before sending requests\n💬 **Personalized Messages**: Mention shared interests or technologies\n🤝 **Follow Up**: Engage with connections' posts and updates\n📅 **Regular Activity**: Stay active on the platform to increase visibility\n🎪 **Events**: Look for virtual meetups and hackathons\n\nWhat specific aspect of connecting would you like help with?";
-    } else if (lowerMessage.includes('feed') || lowerMessage.includes('discover') || lowerMessage.includes('match')) {
-      return "Making the most of DevConnect's feed:\n\n🔍 **Profile Completeness**: Complete profiles get better visibility\n⭐ **Active Engagement**: Connect thoughtfully, not just quantity\n🎯 **Preferences**: Your connections influence who you see\n📈 **Regular Updates**: Keep your skills and experience current\n💡 **Be Specific**: Detailed about section helps with better matches\n\nNeed help optimizing any specific part?";
-    } else if (lowerMessage.includes('trends') || lowerMessage.includes('2024') || lowerMessage.includes('future')) {
-      return "🚀 **Top Tech Trends for 2024**:\n\n🤖 **AI/ML**: Generative AI, LLMs, AI-powered development tools\n☁️ **Cloud**: Edge computing, multi-cloud strategies\n🔐 **Security**: Zero-trust architecture, quantum-safe cryptography\n🌐 **Web3**: Practical blockchain applications, DeFi evolution\n📱 **Development**: Low-code/no-code platforms, WebAssembly\n🎯 **DevOps**: Platform engineering, GitOps, observability\n\nWhich trend interests you most for your career?";
-    } else {
-      return aiResponses.default[Math.floor(Math.random() * aiResponses.default.length)];
-    }
-  };
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -88,20 +72,39 @@ const AIChatbot = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = inputMessage;
     setInputMessage('');
     setIsLoading(true);
 
-    // Simulate AI processing delay
-    setTimeout(() => {
+    try {
+      // Build conversation history for context
+      const conversationHistory = messages.map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'assistant',
+        content: msg.text
+      }));
+
+      const aiResponse = await callOpenAI(currentInput, conversationHistory);
+
       const aiMessage = {
         id: Date.now() + 1,
-        text: getAIResponse(inputMessage),
+        text: aiResponse,
         sender: 'ai',
         timestamp: new Date()
       };
+      
       setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('OpenAI API Error:', error);
+      const errorMessage = {
+        id: Date.now() + 1,
+        text: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment. 🔄",
+        sender: 'ai',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000 + Math.random() * 1000); // 1-2 second delay
+    }
   };
 
   const handleKeyPress = (e) => {

@@ -11,7 +11,7 @@ const validatesignupdata = (req) => {
         throw new Error("Email is not a valid email")
     }
     else if(!validator.isStrongPassword(password)){
-        throw new Error("password is too weak")
+        throw new Error("Password must be at least 8 characters and include: uppercase letter, lowercase letter, number, and symbol")
     }
 }
 

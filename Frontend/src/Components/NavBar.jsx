@@ -201,7 +201,7 @@ const NavBar = () => {
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-base-content/60 break-words overflow-wrap-anywhere">{user.emailId}</div>
+                    <div className="text-xs text-base-content/60 break-all">{user.emailId}</div>
                   </div>
                 </div>
               </li>
