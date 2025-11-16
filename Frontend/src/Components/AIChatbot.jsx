@@ -1,17 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 
+// AI-powered chatbot with OpenAI integration and fallback responses
 const AIChatbot = () => {
   const user = useSelector((store) => store.user);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(true);
+  const [useOpenAI, setUseOpenAI] = useState(true);
   const messagesEndRef = useRef(null);
+
+  // Fallback responses when OpenAI is unavailable
+  const getFallbackResponse = (message) => {
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('profile') || lowerMessage.includes('bio') || lowerMessage.includes('about')) {
+      return "Here are some tips to optimize your profile:\n\n📝 **About Section**: Write a compelling summary highlighting your expertise and goals\n💼 **Skills**: Add relevant technical skills and frameworks\n📸 **Photo**: Use a professional headshot\n🎯 **Be Specific**: Mention specific technologies you work with\n\nWould you like help with any specific section?";
+    } else if (lowerMessage.includes('network') || lowerMessage.includes('connect')) {
+      return "Great networking strategies for developers:\n\n🤝 **Quality over Quantity**: Focus on meaningful connections\n💬 **Personalized Messages**: Always customize connection requests\n🎯 **Common Interests**: Look for shared technologies or goals\n📚 **Knowledge Sharing**: Offer help and ask thoughtful questions\n🌟 **Follow Up**: Stay in touch with your connections\n\nWhat aspect of networking would you like to explore?";
+    } else if (lowerMessage.includes('career') || lowerMessage.includes('job')) {
+      return "Career development tips for developers:\n\n📈 **Continuous Learning**: Stay updated with latest technologies\n🎯 **Specialization**: Develop deep expertise in specific areas\n🏗️ **Build Portfolio**: Create projects that showcase your skills\n👥 **Mentorship**: Both seek mentors and mentor others\n📊 **Track Growth**: Document your achievements and learnings\n\nWhat career aspect would you like guidance on?";
+    } else if (lowerMessage.includes('skill') || lowerMessage.includes('technology') || lowerMessage.includes('learn')) {
+      return "Popular skills in demand for developers:\n\n**Frontend**: React, Vue, Angular, TypeScript\n**Backend**: Node.js, Python, Java, Go, Rust\n**Cloud**: AWS, Azure, GCP, Docker, Kubernetes\n**Database**: PostgreSQL, MongoDB, Redis\n**DevOps**: CI/CD, Terraform, Jenkins\n**Mobile**: React Native, Flutter, Swift, Kotlin\n\nWhich technology stack interests you most?";
+    } else {
+      return "I'm here to help with professional networking and career development! I can assist with:\n\n🔹 Profile optimization tips\n🔹 Networking strategies\n🔹 Career development advice\n🔹 Technology trends and skills\n🔹 Industry insights\n\nWhat would you like to explore?";
+    }
+  };
 
   // Call OpenAI API for intelligent responses
   const callOpenAI = async (userMessage, conversationHistory) => {
     const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    
+    if (!apiKey) {
+      throw new Error('API key not configured');
+    }
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -38,6 +61,10 @@ const AIChatbot = () => {
     });
     
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      if (response.status === 429) {
+        throw new Error('RATE_LIMIT');
+      }
       throw new Error(`OpenAI API error: ${response.status}`);
     }
     
@@ -77,27 +104,46 @@ const AIChatbot = () => {
     setIsLoading(true);
 
     try {
-      // Build conversation history for context
-      const conversationHistory = messages.map(msg => ({
-        role: msg.sender === 'user' ? 'user' : 'assistant',
-        content: msg.text
-      }));
+      let aiResponseText;
+      
+      if (useOpenAI) {
+        try {
+          // Build conversation history for context
+          const conversationHistory = messages.map(msg => ({
+            role: msg.sender === 'user' ? 'user' : 'assistant',
+            content: msg.text
+          }));
 
-      const aiResponse = await callOpenAI(currentInput, conversationHistory);
+          aiResponseText = await callOpenAI(currentInput, conversationHistory);
+        } catch (apiError) {
+          console.error('OpenAI API Error:', apiError);
+          
+          // If rate limit or API error, switch to fallback mode
+          if (apiError.message.includes('RATE_LIMIT') || apiError.message.includes('429')) {
+            setUseOpenAI(false);
+            aiResponseText = "⚠️ OpenAI rate limit reached. Switching to offline mode.\n\n" + getFallbackResponse(currentInput);
+          } else {
+            throw apiError;
+          }
+        }
+      } else {
+        // Use fallback responses
+        aiResponseText = getFallbackResponse(currentInput);
+      }
 
       const aiMessage = {
         id: Date.now() + 1,
-        text: aiResponse,
+        text: aiResponseText,
         sender: 'ai',
         timestamp: new Date()
       };
       
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
-      console.error('OpenAI API Error:', error);
+      console.error('Chatbot Error:', error);
       const errorMessage = {
         id: Date.now() + 1,
-        text: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment. 🔄",
+        text: "I'm sorry, I'm having trouble right now. Let me help you with some general advice:\n\n" + getFallbackResponse(currentInput),
         sender: 'ai',
         timestamp: new Date()
       };
