@@ -23,7 +23,7 @@ Features
 - **EditProfile.jsx** - Profile editing interface
 - **API Integration** - Centralized API utilities for clean code
 
-## 🔧 API Integration Details
+## API Integration Details
 
 ### Profile Data Flow
 1. **Initial Load**: Body component fetches user profile on app mount
