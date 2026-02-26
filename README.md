@@ -2,7 +2,7 @@
 
 A modern full-stack application for developers to connect, collaborate, and grow together. Built by [Harsh Ramchandani](https://github.com/harsh-85293).
 
-## 👨‍💻 Developer
+Developer
 
 **Harsh Ramchandani**
 - 🔗 GitHub: [@harsh-85293](https://github.com/harsh-85293)
@@ -12,7 +12,7 @@ A modern full-stack application for developers to connect, collaborate, and grow
 
 This project demonstrates a complete professional networking system with frontend and backend integration.
 
-## 🚀 Features
+Features
 
 ### Backend API Endpoints
 - `GET /profile/view` - Retrieve user profile data
@@ -32,14 +32,14 @@ This project demonstrates a complete professional networking system with fronten
 4. **Error Handling**: Comprehensive error handling with user notifications
 
 ### Key Features
-- ✅ **Profile Completion Indicator** - Visual progress bar showing profile completeness
-- ✅ **Real-time Sync** - Refresh button to sync with backend
-- ✅ **Loading States** - Smooth loading animations during API calls
-- ✅ **Error Handling** - User-friendly error messages and notifications
-- ✅ **Responsive Design** - Mobile-first design with Tailwind CSS
-- ✅ **Data Persistence** - Local storage backup for offline access
+- **Profile Completion Indicator** - Visual progress bar showing profile completeness
+- **Real-time Sync** - Refresh button to sync with backend
+- **Loading States** - Smooth loading animations during API calls
+- **Error Handling** - User-friendly error messages and notifications
+- **Responsive Design** - Mobile-first design with Tailwind CSS
+- **Data Persistence** - Local storage backup for offline access
 
-## 🛠️ Technical Stack
+## Technical Stack
 
 - **Frontend**: React 19 + Redux Toolkit + Tailwind CSS + DaisyUI
 - **Backend**: Node.js + Express + MongoDB + Mongoose
@@ -49,7 +49,7 @@ This project demonstrates a complete professional networking system with fronten
 - **State Management**: Redux with localStorage persistence
 - **Real-time**: Socket.io with Redis adapter for scalability
 
-## 📱 Usage
+## Usage
 
 ### Viewing Profile
 - Navigate to `/profile` route
@@ -75,13 +75,13 @@ const result = await profileAPI.updateProfile(profileData);
 const freshData = await profileAPI.refreshProfile();
 ```
 
-## 🔐 Authentication
+## Authentication
 
 - JWT-based authentication with cookies
 - Protected routes require valid user session
 - Automatic redirect to login for unauthorized access
 
-## 📊 Profile Fields
+## Profile Fields
 
 - **Basic Info**: firstName, lastName, age, gender
 - **Contact**: emailId
@@ -89,7 +89,7 @@ const freshData = await profileAPI.refreshProfile();
 - **Professional**: about, skills array
 - **Metadata**: createdAt, timestamps
 
-## 🚦 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Docker (for Redis and Kafka)
@@ -127,7 +127,7 @@ const freshData = await profileAPI.refreshProfile();
 
 See `DOCUMENTATION/KAFKA_REDIS_ARCHITECTURE.md` and `REDIS_KAFKA_INTEGRATION_FILES/README.md` for detailed setup.
 
-## 🔄 API Response Format
+## API Response Format
 
 ```json
 {
@@ -143,7 +143,7 @@ See `DOCUMENTATION/KAFKA_REDIS_ARCHITECTURE.md` and `REDIS_KAFKA_INTEGRATION_FIL
 }
 ```
 
-## 🎯 Future Enhancements
+## Future Enhancements
 
 - [ ] Profile analytics and insights
 - [ ] Social connections and networking
@@ -154,7 +154,7 @@ See `DOCUMENTATION/KAFKA_REDIS_ARCHITECTURE.md` and `REDIS_KAFKA_INTEGRATION_FIL
 
 ---
 
-## ☁️ Deployment Guide (Render backend + Vercel frontend)
+## Deployment Guide (Render backend + Vercel frontend)
 
 ### 1) Prepare environment variables
 
@@ -213,7 +213,7 @@ const socket = io(import.meta.env.VITE_API_BASE_URL, { withCredentials: true, tr
 
 ---
 
-## 🔑 Environment quick reference (no secrets)
+## Environment quick reference (no secrets)
 
 Backend (`BACKEND/.env` on your host):
 
@@ -235,7 +235,7 @@ Frontend (`Frontend/.env` in Vercel):
 
 ---
 
-## 🖼️ Render setup (screenshots placeholders)
+## Render setup (screenshots placeholders)
 
 1. Create Web Service → select repo → Root Dir: `BACKEND`
    - [screenshot: render-new-service.png]
