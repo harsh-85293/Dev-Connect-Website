@@ -5,8 +5,8 @@ A modern full-stack application for developers to connect, collaborate, and grow
 Developer
 
 **Harsh Ramchandani**
-- 🔗 GitHub: [@harsh-85293](https://github.com/harsh-85293)
-- 💼 LinkedIn: [harsh-ramchandani007](https://www.linkedin.com/in/harsh-ramchandani007/)
+- GitHub: [@harsh-85293](https://github.com/harsh-85293)
+- LinkedIn: [harsh-ramchandani007](https://www.linkedin.com/in/harsh-ramchandani007/)
 
 ---
 
