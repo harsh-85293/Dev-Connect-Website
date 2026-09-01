@@ -10,9 +10,19 @@ const redisClient = require("../config/redis");
 const kafkaClient = require("../config/kafka");
 
 if (!admin.apps.length) {
-    admin.initializeApp({
+    const firebaseAdminConfig = {
         projectId: process.env.FIREBASE_PROJECT_ID,
-    });
+    };
+
+    if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+        firebaseAdminConfig.credential = admin.credential.cert({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        });
+    }
+
+    admin.initializeApp(firebaseAdminConfig);
 }
 const isProd = process.env.NODE_ENV === 'production';
 const cookieBaseOptions = {
@@ -205,6 +215,10 @@ authRouter.post("/login", async(req, res) => {
 
 authRouter.post('/auth/google', async (req, res) => {
     try {
+        if (!process.env.FIREBASE_PROJECT_ID) {
+            return res.status(503).json({ message: 'Google authentication is not configured on the server.' });
+        }
+
         const { token } = req.body || {};
 
         if (!token) {

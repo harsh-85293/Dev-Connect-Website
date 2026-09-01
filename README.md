@@ -59,6 +59,9 @@ PORT=3000
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_secret_key
 FRONTEND_URL=http://localhost:5173
+FIREBASE_PROJECT_ID=evconnect-92fdb
+FIREBASE_CLIENT_EMAIL=your_firebase_admin_client_email
+FIREBASE_PRIVATE_KEY=your_firebase_private_key_with_literal_\\n
 ```
 
 Frontend example:
