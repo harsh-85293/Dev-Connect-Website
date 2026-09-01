@@ -7,8 +7,6 @@ import { addUser } from "../utils/userSlice";
 import { signInWithGoogle, isFirebaseConfigured } from "../utils/firebase";
 import ThemeToggle from "./ThemeToggle";
 
-const githubLoginEnabled = String(import.meta.env.VITE_ENABLE_GITHUB_LOGIN || "").toLowerCase() === "true";
-
 const Login = () => {
   const [emailId, setEmailId] = useState("");
   const [password, setPassword] = useState("");
@@ -155,24 +153,6 @@ const Login = () => {
               {isSubmitting ? "Connecting…" : !isFirebaseConfigured ? "Google not configured" : "Continue with Google"}
             </button>
 
-            <button
-              type="button"
-              className="btn btn-outline w-full justify-center gap-3 rounded-xl border border-base-content/20 bg-base-200/40 hover:bg-base-200 text-base-content disabled:opacity-70"
-              disabled={isSubmitting || !githubLoginEnabled}
-              onClick={() => {
-                if (!githubLoginEnabled) {
-                  setError('GitHub login is not configured yet.');
-                  return;
-                }
-                window.location.href = `${BASE_URL}/auth/github`;
-              }}
-              title={!githubLoginEnabled ? 'GitHub OAuth is not enabled on the backend yet.' : undefined}
-            >
-              <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">
-                <path fill="currentColor" d="M12 .5a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.6-4-1.6-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.2 1.9 1.2 1.1 1.9 2.9 1.4 3.6 1 .1-.8.4-1.4.7-1.7-2.6-.3-5.4-1.3-5.4-5.8 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2A11.4 11.4 0 0112 7.2c1 0 2 .1 3 .4 2.3-1.6 3.3-1.2 3.3-1.2.7 1.6.2 2.8.1 3.1.8.8 1.2 1.9 1.2 3.2 0 4.5-2.8 5.5-5.5 5.8.4.4.8 1.1.8 2.3v3.4c0 .3.2.7.8.6A12 12 0 0012 .5z"/>
-              </svg>
-              {!githubLoginEnabled ? 'GitHub not configured' : 'Continue with GitHub'}
-            </button>
           </div>
 
           <div className="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-base-content/50">
