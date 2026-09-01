@@ -54,6 +54,7 @@ generate_diagram_images.py
 # Keep the actual app entry files tracked
 !Frontend/index.html
 !Frontend/**/*.html
+!Frontend/*.html
 
 # Logs
 logs/
