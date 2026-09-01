@@ -39,9 +39,13 @@ coverage/
 ARCHIVES/
 DOCUMENTATION/
 Interview/
+Interview.zip
+
 diagrams/
 REDIS_KAFKA_INTEGRATION_FILES/
 SCRIPTS/
+generate_images.*
+generate_diagram_images.py
 *.mmd
 *.html
 *.md
