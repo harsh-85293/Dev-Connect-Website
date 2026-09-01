@@ -4,26 +4,12 @@ const authRouter = express.Router();
 const User = require("../models/user");
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken");
-const admin = require('firebase-admin');
+const { OAuth2Client } = require('google-auth-library');
 const { sendWelcomeEmail, sendLoginSuggestionEmail } = require("../services/emailService");
 const redisClient = require("../config/redis");
 const kafkaClient = require("../config/kafka");
 
-if (!admin.apps.length) {
-    const firebaseAdminConfig = {
-        projectId: process.env.FIREBASE_PROJECT_ID,
-    };
-
-    if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
-        firebaseAdminConfig.credential = admin.credential.cert({
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        });
-    }
-
-    admin.initializeApp(firebaseAdminConfig);
-}
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const isProd = process.env.NODE_ENV === 'production';
 const cookieBaseOptions = {
     httpOnly: true,
@@ -215,7 +201,7 @@ authRouter.post("/login", async(req, res) => {
 
 authRouter.post('/auth/google', async (req, res) => {
     try {
-        if (!process.env.FIREBASE_PROJECT_ID) {
+        if (!process.env.GOOGLE_CLIENT_ID) {
             return res.status(503).json({ message: 'Google authentication is not configured on the server.' });
         }
 
@@ -225,8 +211,12 @@ authRouter.post('/auth/google', async (req, res) => {
             return res.status(400).json({ message: 'Google token is required.' });
         }
 
-        const decodedToken = await admin.auth().verifyIdToken(token);
-        const email = normalizeEmail(decodedToken.email || '');
+        const ticket = await googleClient.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const decodedToken = ticket.getPayload();
+        const email = normalizeEmail(decodedToken?.email || '');
 
         if (!email) {
             return res.status(400).json({ message: 'Google account email is required.' });

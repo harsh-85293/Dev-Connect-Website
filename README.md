@@ -21,7 +21,7 @@ It has a React frontend, a Node.js/Express backend, and MongoDB for the main dat
 - Backend: Node.js, Express
 - Database: MongoDB
 - Real-time: Socket.IO
-- Auth: JWT + Firebase Google auth
+- Auth: JWT + Google Identity Services
 - Optional services: Redis and Kafka
 
 ## Project structure
@@ -59,28 +59,21 @@ PORT=3000
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_secret_key
 FRONTEND_URL=http://localhost:5173
-FIREBASE_PROJECT_ID=evconnect-92fdb
-FIREBASE_CLIENT_EMAIL=your_firebase_admin_client_email
-FIREBASE_PRIVATE_KEY=your_firebase_private_key_with_literal_\\n
+GOOGLE_CLIENT_ID=your_google_web_client_id
 ```
 
 Frontend example:
 
 ```env
 VITE_API_BASE_URL=http://localhost:3000
-VITE_FIREBASE_API_KEY=your_key
-VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
+VITE_GOOGLE_CLIENT_ID=your_google_web_client_id
 ```
 
-Firebase Google sign-in also needs these console settings:
+Google sign-in also needs these Google Cloud settings:
 
-- Enable Google under Authentication -> Sign-in method
-- Add `localhost` and your deployed domain under Authentication -> Settings -> Authorized domains
-- Make sure `VITE_FIREBASE_AUTH_DOMAIN` matches the Firebase project auth domain exactly
+- Create a Web OAuth client ID in Google Cloud Console
+- Add `http://localhost:5173` and `https://dev-connect-website.vercel.app` as authorized JavaScript origins
+- Set the same client ID in Vercel as `VITE_GOOGLE_CLIENT_ID` and in Render as `GOOGLE_CLIENT_ID`
 
 ### 3. Start the app
 
@@ -110,7 +103,7 @@ Then open:
 - Search for developers
 - Send connection requests
 - Chat with accepted connections
-- Use Google login if enabled in Firebase
+- Use Google login if configured in Google Cloud
 
 ## Notes
 

@@ -4,12 +4,9 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../utils/constants";
 import { addUser } from "../utils/userSlice";
-import {
-  getGoogleRedirectSignInResult,
-  isFirebaseConfigured,
-  signInWithGoogle,
-} from "../utils/firebase";
 import ThemeToggle from "./ThemeToggle";
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 const Login = () => {
   const [emailId, setEmailId] = useState("");
@@ -21,7 +18,8 @@ const Login = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate();   
   const [error, setError] = useState("")
-  const redirectHandledRef = useRef(false)
+  const googleButtonRef = useRef(null)
+  const submitGoogleLoginRef = useRef(null)
 
   const normalizeEmail = (value = "") => value.trim().toLowerCase();
 
@@ -36,36 +34,62 @@ const Login = () => {
     navigate("/");
   };
 
+  submitGoogleLoginRef.current = submitGoogleLogin;
+
   useEffect(() => {
-    if (redirectHandledRef.current || !isFirebaseConfigured) return;
+    if (!GOOGLE_CLIENT_ID || !googleButtonRef.current) return;
 
-    redirectHandledRef.current = true;
     let cancelled = false;
+    const renderGoogleButton = () => {
+      if (cancelled || !googleButtonRef.current || !window.google?.accounts?.id) return;
 
-    const completeRedirectLogin = async () => {
-      try {
-        const result = await getGoogleRedirectSignInResult();
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: async ({ credential }) => {
+          if (!credential || !submitGoogleLoginRef.current) return;
 
-        if (!result?.idToken || cancelled) return;
-
-        setIsSubmitting(true);
-        await submitGoogleLogin(result.idToken);
-      } catch (err) {
-        if (!cancelled) {
-          console.warn('Google redirect sign-in failed:', err?.message || err);
           setError("");
-        }
-      } finally {
-        if (!cancelled) {
-          setIsSubmitting(false);
-        }
-      }
+          setIsSubmitting(true);
+          try {
+            await submitGoogleLoginRef.current(credential);
+          } catch (err) {
+            console.warn('Google sign-in failed:', err?.response?.data || err?.message || err);
+            setError("");
+          } finally {
+            setIsSubmitting(false);
+          }
+        },
+      });
+
+      googleButtonRef.current.innerHTML = "";
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: "outline",
+        size: "large",
+        width: 480,
+        text: "continue_with",
+      });
     };
 
-    completeRedirectLogin();
+    if (window.google?.accounts?.id) {
+      renderGoogleButton();
+      return () => {
+        cancelled = true;
+      };
+    }
 
+    let script = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+    if (!script) {
+      script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+
+    script.addEventListener("load", renderGoogleButton);
     return () => {
       cancelled = true;
+      script.removeEventListener("load", renderGoogleButton);
     };
   }, []);
 
@@ -130,25 +154,6 @@ const Login = () => {
       }
   }
 
-  const handleGoogleLogin = async () => {
-    if (isSubmitting) return;
-
-    setError("");
-    setIsSubmitting(true);
-
-    try {
-      const { idToken } = await signInWithGoogle();
-      if (idToken) {
-        await submitGoogleLogin(idToken);
-      }
-    } catch (err) {
-      console.warn('Google sign-in failed:', err?.message || err);
-      setError("");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-base-200 py-12 px-4 sm:px-6 lg:px-8 relative">
       <div className="bg-pattern absolute inset-0"></div>
@@ -185,18 +190,11 @@ const Login = () => {
           islogin ? handleLogin() : handleSignup();
         }}>
           <div className="grid grid-cols-1 gap-3">
-            <button
-              type="button"
-              className="btn btn-outline w-full justify-center gap-3 rounded-xl border border-base-content/20 bg-base-200/40 hover:bg-base-200 text-base-content disabled:opacity-70"
-              onClick={handleGoogleLogin}
-              disabled={isSubmitting || !isFirebaseConfigured}
-              title={!isFirebaseConfigured ? 'Google sign-in is not configured yet.' : undefined}
-            >
-              <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">
-                <path fill="#EA4335" d="M12 10.2v3.9h5.4c-.2 1.3-1.6 3.9-5.4 3.9-3.2 0-5.9-2.7-5.9-6s2.7-6 5.9-6c1.8 0 3 .8 3.7 1.5l2.5-2.5C16.8 3.2 14.7 2.4 12 2.4 6.9 2.4 2.8 6.5 2.8 11.7S6.9 21 12 21c6.9 0 11.4-4.9 11.4-11.7 0-.8-.1-1.3-.2-1.9H12z"/>
-              </svg>
-              {isSubmitting ? "Connecting…" : !isFirebaseConfigured ? "Google not configured" : "Continue with Google"}
-            </button>
+            {GOOGLE_CLIENT_ID ? (
+              <div ref={googleButtonRef} className="min-h-10 flex justify-center" aria-label="Continue with Google" />
+            ) : (
+              <p className="text-center text-sm text-base-content/60">Google sign-in is not configured.</p>
+            )}
 
           </div>
 
