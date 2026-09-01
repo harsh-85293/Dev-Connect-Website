@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../utils/constants";
 import { addUser } from "../utils/userSlice";
 import {
-  getFirebaseAuthErrorMessage,
   getGoogleRedirectSignInResult,
   isFirebaseConfigured,
   signInWithGoogle,
@@ -53,7 +52,8 @@ const Login = () => {
         await submitGoogleLogin(result.idToken);
       } catch (err) {
         if (!cancelled) {
-          setError(getFirebaseAuthErrorMessage(err));
+          console.warn('Google redirect sign-in failed:', err?.message || err);
+          setError("");
         }
       } finally {
         if (!cancelled) {
@@ -143,7 +143,7 @@ const Login = () => {
       }
     } catch (err) {
       console.warn('Google sign-in failed:', err?.message || err);
-      setError(getFirebaseAuthErrorMessage(err));
+      setError("");
     } finally {
       setIsSubmitting(false);
     }
