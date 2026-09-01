@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import axios from "axios";//same work as fetch 
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../utils/constants";
 import { addUser } from "../utils/userSlice";
@@ -20,6 +20,7 @@ const Login = () => {
   const [error, setError] = useState("")
   const googleButtonRef = useRef(null)
   const submitGoogleLoginRef = useRef(null)
+  const user = useSelector((store) => store.user)
 
   const normalizeEmail = (value = "") => value.trim().toLowerCase();
 
@@ -35,6 +36,12 @@ const Login = () => {
   };
 
   submitGoogleLoginRef.current = submitGoogleLogin;
+
+  useEffect(() => {
+    if (user && Object.keys(user).length > 0) {
+      navigate("/", { replace: true });
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID || !googleButtonRef.current) return;
