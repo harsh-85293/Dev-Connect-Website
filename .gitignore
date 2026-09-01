@@ -47,10 +47,13 @@ SCRIPTS/
 generate_images.*
 generate_diagram_images.py
 *.mmd
-*.html
 *.md
 !README.md
 !**/README.md
+
+# Keep the actual app entry files tracked
+!Frontend/index.html
+!Frontend/**/*.html
 
 # Logs
 logs/
