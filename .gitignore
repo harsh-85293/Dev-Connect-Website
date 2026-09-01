@@ -34,6 +34,20 @@ coverage/
 .env.test
 .env.production
 
+# Local-only notes, docs, diagrams, and project artifacts
+.kiro/
+ARCHIVES/
+DOCUMENTATION/
+Interview/
+diagrams/
+REDIS_KAFKA_INTEGRATION_FILES/
+SCRIPTS/
+*.mmd
+*.html
+*.md
+!README.md
+!**/README.md
+
 # Logs
 logs/
 *.log
