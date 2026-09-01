@@ -1,10 +1,15 @@
-import {useState} from "react"
+import { useEffect, useRef, useState } from "react"
 import axios from "axios";//same work as fetch 
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../utils/constants";
 import { addUser } from "../utils/userSlice";
-import { signInWithGoogle, isFirebaseConfigured } from "../utils/firebase";
+import {
+  getFirebaseAuthErrorMessage,
+  getGoogleRedirectSignInResult,
+  isFirebaseConfigured,
+  signInWithGoogle,
+} from "../utils/firebase";
 import ThemeToggle from "./ThemeToggle";
 
 const Login = () => {
@@ -17,8 +22,52 @@ const Login = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate();   
   const [error, setError] = useState("")
+  const redirectHandledRef = useRef(false)
 
   const normalizeEmail = (value = "") => value.trim().toLowerCase();
+
+  const submitGoogleLogin = async (idToken) => {
+    const res = await axios.post(
+      `${BASE_URL}/auth/google`,
+      { token: idToken },
+      { withCredentials: true }
+    );
+
+    dispatch(addUser(res.data.user || res.data));
+    navigate("/");
+  };
+
+  useEffect(() => {
+    if (redirectHandledRef.current || !isFirebaseConfigured) return;
+
+    redirectHandledRef.current = true;
+    let cancelled = false;
+
+    const completeRedirectLogin = async () => {
+      try {
+        const result = await getGoogleRedirectSignInResult();
+
+        if (!result?.idToken || cancelled) return;
+
+        setIsSubmitting(true);
+        await submitGoogleLogin(result.idToken);
+      } catch (err) {
+        if (!cancelled) {
+          setError(getFirebaseAuthErrorMessage(err));
+        }
+      } finally {
+        if (!cancelled) {
+          setIsSubmitting(false);
+        }
+      }
+    };
+
+    completeRedirectLogin();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleLogin = async() => {
     if (isSubmitting) return;
@@ -89,18 +138,12 @@ const Login = () => {
 
     try {
       const { idToken } = await signInWithGoogle();
-      const res = await axios.post(
-        `${BASE_URL}/auth/google`,
-        { token: idToken },
-        { withCredentials: true }
-      );
-
-      dispatch(addUser(res.data.user || res.data));
-      navigate("/");
+      if (idToken) {
+        await submitGoogleLogin(idToken);
+      }
     } catch (err) {
-      // Suppress noisy Firebase/network errors from the UI.
       console.warn('Google sign-in failed:', err?.message || err);
-      setError('');
+      setError(getFirebaseAuthErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }

@@ -73,6 +73,12 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 ```
 
+Firebase Google sign-in also needs these console settings:
+
+- Enable Google under Authentication -> Sign-in method
+- Add `localhost` and your deployed domain under Authentication -> Settings -> Authorized domains
+- Make sure `VITE_FIREBASE_AUTH_DOMAIN` matches the Firebase project auth domain exactly
+
 ### 3. Start the app
 
 Backend:
