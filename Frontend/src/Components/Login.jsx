@@ -98,7 +98,9 @@ const Login = () => {
       dispatch(addUser(res.data.user || res.data));
       navigate("/");
     } catch (err) {
-      setError(err?.response?.data?.message || err.message || "Google sign-in failed");
+      // Suppress noisy Firebase/network errors from the UI.
+      console.warn('Google sign-in failed:', err?.message || err);
+      setError('');
     } finally {
       setIsSubmitting(false);
     }
