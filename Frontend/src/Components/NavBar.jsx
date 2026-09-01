@@ -189,19 +189,19 @@ const NavBar = () => {
                     </div>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-base-content flex items-center gap-2">
-                      {user.firstName} {user.lastName}
+                    <div className="font-semibold text-base-content flex items-center gap-2 min-w-0">
+                      <span className="truncate">{user.firstName} {user.lastName}</span>
                       {user.isPremium && (
                         <span
                           title={user.membershipTier === 'gold' ? 'Gold Member' : 'Silver Member'}
-                          className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full ${user.membershipTier === 'gold' ? 'bg-yellow-400 text-black' : 'bg-blue-500 text-white'}`}
+                          className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full shrink-0 ${user.membershipTier === 'gold' ? 'bg-yellow-400 text-black' : 'bg-blue-500 text-white'}`}
                         >
                           <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2l-3.5-3.5L4 14.2l5 5 11-11-1.4-1.4z"/></svg>
                           {user.membershipTier?.toUpperCase()}
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-base-content/60 break-all">{user.emailId}</div>
+                    <div className="text-xs text-base-content/60 break-all whitespace-normal max-w-[180px] overflow-hidden text-ellipsis">{user.emailId}</div>
                   </div>
                 </div>
               </li>

@@ -4,6 +4,7 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../utils/constants";
 import { addUser } from "../utils/userSlice";
+import { signInWithGoogle } from "../utils/firebase";
 import ThemeToggle from "./ThemeToggle";
 
 const Login = () => {
@@ -12,44 +13,96 @@ const Login = () => {
   const [firstName, setfirstName] = useState("");
   const [lastName, setlastName] = useState("");
   const [islogin, setislogin] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const dispatch = useDispatch()
   const navigate = useNavigate();   
   const [error, setError] = useState("")
 
-  // Debug logs
-  console.log("Login component state:", { emailId, password, firstName, lastName });
+  const normalizeEmail = (value = "") => value.trim().toLowerCase();
 
   const handleLogin = async() => {
-    try
-      {
-        const res = await axios.post(BASE_URL + "/login", 
-          { emailId, password }, 
-          { withCredentials: true }
-        );
-        dispatch(addUser(res.data));
-        return navigate("/")
-      }
-      catch(err){
-        setError(err.message)
-        console.error(err?.response?.data || "Something  went wrong");
-      }
+    if (isSubmitting) return;
+
+    const finalEmail = normalizeEmail(emailId);
+    const trimmedPassword = password.trim();
+
+    if (!finalEmail || !trimmedPassword) {
+      setError("Please enter both email and password.");
+      return;
+    }
+
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      const res = await axios.post(BASE_URL + "/login", 
+        { emailId: finalEmail, password: trimmedPassword }, 
+        { withCredentials: true }
+      );
+      dispatch(addUser(res.data));
+      navigate("/")
+    }
+    catch(err){
+      setError(err?.response?.data || err.message || "Something went wrong");
+    }
+    finally {
+      setIsSubmitting(false);
+    }
   }
 
   const handleSignup = async() => {
+    if (isSubmitting) return;
+
+    const finalEmail = normalizeEmail(emailId);
+    const trimmedPassword = password.trim();
+
+    if (!firstName.trim() || !finalEmail || !trimmedPassword) {
+      setError("Please fill in all required fields.");
+      return;
+    }
+
+    setError("");
+    setIsSubmitting(true);
+
     try
       {
         const res = await axios.post(BASE_URL + "/signup", 
-          { firstName, lastName, emailId, password }, 
+          { firstName: firstName.trim(), lastName: lastName.trim(), emailId: finalEmail, password: trimmedPassword }, 
           { withCredentials: true }
         );
         dispatch(addUser(res.data));
-        return navigate("/profile")
+        navigate("/profile")
       }
       catch(err){
-        setError(err.message)
-        console.error(err?.response?.data || "Something  went wrong");
+        setError(err?.response?.data || err.message || "Something went wrong");
+      }
+      finally {
+        setIsSubmitting(false);
       }
   }
+
+  const handleGoogleLogin = async () => {
+    if (isSubmitting) return;
+
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      const { idToken } = await signInWithGoogle();
+      const res = await axios.post(
+        `${BASE_URL}/auth/google`,
+        { token: idToken },
+        { withCredentials: true }
+      );
+
+      dispatch(addUser(res.data.user || res.data));
+      navigate("/");
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || "Google sign-in failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-base-200 py-12 px-4 sm:px-6 lg:px-8 relative">
@@ -86,6 +139,39 @@ const Login = () => {
           e.preventDefault();
           islogin ? handleLogin() : handleSignup();
         }}>
+          <div className="grid grid-cols-1 gap-3">
+            <button
+              type="button"
+              className="btn btn-outline w-full justify-center gap-3 rounded-xl border border-base-content/20 bg-base-200/40 hover:bg-base-200 text-base-content disabled:opacity-70"
+              onClick={handleGoogleLogin}
+              disabled={isSubmitting}
+            >
+              <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">
+                <path fill="#EA4335" d="M12 10.2v3.9h5.4c-.2 1.3-1.6 3.9-5.4 3.9-3.2 0-5.9-2.7-5.9-6s2.7-6 5.9-6c1.8 0 3 .8 3.7 1.5l2.5-2.5C16.8 3.2 14.7 2.4 12 2.4 6.9 2.4 2.8 6.5 2.8 11.7S6.9 21 12 21c6.9 0 11.4-4.9 11.4-11.7 0-.8-.1-1.3-.2-1.9H12z"/>
+              </svg>
+              {isSubmitting ? "Connecting…" : "Continue with Google"}
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-outline w-full justify-center gap-3 rounded-xl border border-base-content/20 bg-base-200/40 hover:bg-base-200 text-base-content"
+              onClick={() => {
+                window.location.href = `${BASE_URL}/auth/github`;
+              }}
+            >
+              <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">
+                <path fill="currentColor" d="M12 .5a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.6-4-1.6-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.2 1.9 1.2 1.1 1.9 2.9 1.4 3.6 1 .1-.8.4-1.4.7-1.7-2.6-.3-5.4-1.3-5.4-5.8 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2A11.4 11.4 0 0112 7.2c1 0 2 .1 3 .4 2.3-1.6 3.3-1.2 3.3-1.2.7 1.6.2 2.8.1 3.1.8.8 1.2 1.9 1.2 3.2 0 4.5-2.8 5.5-5.5 5.8.4.4.8 1.1.8 2.3v3.4c0 .3.2.7.8.6A12 12 0 0012 .5z"/>
+              </svg>
+              Continue with GitHub
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-base-content/50">
+            <span className="h-px flex-1 bg-base-content/10" />
+            <span>or</span>
+            <span className="h-px flex-1 bg-base-content/10" />
+          </div>
+
           {/* First Name and Last Name for Signup */}
           {!islogin && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -153,6 +239,7 @@ const Login = () => {
                 placeholder="Enter your email address"
                 autoComplete="email"
                 onChange={(e) => setEmailId(e.target.value)}
+                onBlur={(e) => setEmailId(normalizeEmail(e.target.value))}
                 required
               />
             </div>
@@ -196,9 +283,15 @@ const Login = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="btn-gradient-primary w-full h-12 rounded-xl text-white font-semibold text-lg shadow-medium hover:shadow-strong transition-all duration-300 transform hover:scale-105 border-0"
+            disabled={isSubmitting}
+            className="btn-gradient-primary w-full h-12 rounded-xl text-white font-semibold text-lg shadow-medium hover:shadow-strong transition-all duration-300 transform hover:scale-105 border-0 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
           >
-            {islogin ? (
+            {isSubmitting ? (
+              <span className="inline-flex items-center justify-center gap-2">
+                <span className="loading loading-spinner loading-sm" />
+                {islogin ? "Signing in..." : "Creating account..."}
+              </span>
+            ) : islogin ? (
               <>
                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M3 3a1 1 0 011 1v12a1 1 0 102 0V4a1 1 0 011-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd"/>
