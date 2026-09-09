@@ -6,8 +6,10 @@ The project is built as a separate React client and Express API. It uses MongoDB
 
 ## Live Demo
 
-- Frontend: https://dev-connect-website.vercel.app
-- API: https://dev-connect-website.onrender.com
+- Frontend (Vercel): https://dev-connect-website.vercel.app
+- Frontend (GitHub Pages): https://harsh-85293.github.io/Dev-Connect-Website/
+- API (Render): https://dev-connect-website.onrender.com
+- API health check: https://dev-connect-website.onrender.com/healthz
 
 ## Highlights
 
@@ -23,7 +25,7 @@ The project is built as a separate React client and Express API. It uses MongoDB
 ## Architecture
 
 ```text
-React + Vite (Vercel)
+React + Vite (Vercel or GitHub Pages)
         |
         | HTTPS / credentials-enabled API requests
         v
@@ -98,6 +100,8 @@ PORT=3000
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_long_random_secret
 FRONTEND_URL=http://localhost:5173
+# Comma-separated production origins can be configured on Render.
+# FRONTEND_URLS=https://harsh-85293.github.io,https://dev-connect-website.vercel.app
 GOOGLE_CLIENT_ID=your_google_web_client_id.apps.googleusercontent.com
 ```
 
@@ -156,8 +160,10 @@ npm run dev
 ## Deployment
 
 - Vercel builds and serves the `Frontend` application.
+- GitHub Actions builds and deploys the same `Frontend` application to GitHub Pages.
 - Render runs `BACKEND/src/app.js` with `npm start`.
-- `VITE_API_BASE_URL` points the frontend to the Render API.
+- Both frontend deployments use `https://dev-connect-website.onrender.com` as `VITE_API_BASE_URL`.
+- Render allows both frontend origins through `FRONTEND_URL` and comma-separated `FRONTEND_URLS`.
 - `VITE_GOOGLE_CLIENT_ID` is configured in Vercel.
 - `GOOGLE_CLIENT_ID` is configured in Render.
 
