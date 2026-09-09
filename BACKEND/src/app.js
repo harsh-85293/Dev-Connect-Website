@@ -14,11 +14,20 @@ const User = require("./models/user");
 const cookieParser = require("cookie-parser")
 const cors = require("cors")
 
+const configuredFrontendOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.FRONTEND_URLS,
+]
+  .filter(Boolean)
+  .flatMap((origins) => origins.split(","))
+  .map((origin) => origin.trim().replace(/\/$/, ""))
+  .filter(Boolean);
+
 const staticAllowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
-  process.env.FRONTEND_URL,
-].filter(Boolean);
+  ...configuredFrontendOrigins,
+];
 
 // Allow Vercel preview deployments for this project
 const vercelPreviewRegex = /^https:\/\/dev-connect-website(-[a-z0-9-]+)?\.vercel\.app$/;
