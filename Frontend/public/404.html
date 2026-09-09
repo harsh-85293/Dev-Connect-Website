@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      const base = "/Dev-Connect-Website";
+      const path = window.location.pathname.startsWith(base)
+        ? window.location.pathname.slice(base.length) || "/"
+        : window.location.pathname;
+      const target = `${base}/?redirect=${encodeURIComponent(
+        path + window.location.search + window.location.hash
+      )}`;
+      window.location.replace(target);
+    </script>
+  </head>
+  <body></body>
+</html>
