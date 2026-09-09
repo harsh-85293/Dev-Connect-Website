@@ -28,7 +28,7 @@ function App() {
   return (  
     <Provider store={appStore}>
       <ThemeProvider>
-        <BrowserRouter basename="/">
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
           <div className="min-h-screen flex flex-col bg-base-100">
             <NavBar />
             <main className="flex-1">
